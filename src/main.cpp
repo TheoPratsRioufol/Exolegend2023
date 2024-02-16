@@ -28,13 +28,26 @@ void loop()
         // const MazeSquare *target = gladiator->maze->getSquare(0, 0);
         // gladiator->log("Shortest path squa");
         gladiator->log("COMPUTE START");
-        hashMazeNode *mazeCosts = solve(current_square, gladiator);
+        hashMazeNode* mazeCosts = solve(current_square, gladiator);
+
+        gladiator->log("END DIJTRA !!!");
 
         for (int i = 0; i < MAZE_NUMBER_CELLS; i++)
         {
-            // gladiator->log("Shortest path square: %d, %d", i, mazeCosts->get(i).cost);
+            gladiator->log("Shortest path to  %d = %d", mazeCosts->get(i)->id, mazeCosts->get(i)->cost);
+            if (mazeCosts->get(i)->cost == 0)
+            continue;
+            gladiator->log("parent = %d",mazeCosts->get(i)->parent);
         }
-        gladiator->log("END");
+
+         gladiator->log("Print PATH !!!");
+        mazeNode A;
+        A.id = genId(current_square);
+        mazeNode B;
+        B.id = 123;
+        printPath(mazeCosts, A, B,gladiator);
+        gladiator->log("END PATH !!!");
+
         while (1)
             ;
     }

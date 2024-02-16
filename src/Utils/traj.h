@@ -1,31 +1,32 @@
 #include "gladiator.h"
 
-#define NB_ROW 16
+#define NB_ROW 12
 #define MAZE_NUMBER_CELLS NB_ROW *NB_ROW
 #define MAX_COST 10000
 
 struct mazeNode
 {
-    mazeNode *parent;
+    //mazeNode *parent = nullptr;
+    int parent = 1;
     int cost = 0;
     int id = -1;
     bool haveParent = false;
-    const MazeSquare *square;
+    MazeSquare *square;
 };
 
 class listMazeNode
 {
 public:
-    mazeNode *elements[MAZE_NUMBER_CELLS];
+    mazeNode elements[MAZE_NUMBER_CELLS];
     int last_idx = 0;
     void push(mazeNode node)
     {
-        elements[last_idx] = &node;
+        elements[last_idx] = node;
         last_idx++;
     }
-    mazeNode *pop()
+    mazeNode pop()
     {
-        last_idx--;
+        last_idx = last_idx - 1;
         return elements[last_idx];
     }
     int len()
@@ -34,13 +35,13 @@ public:
     }
     mazeNode *get(int idx)
     {
-        return elements[idx];
+        return &elements[idx];
     }
     boolean has(mazeNode node)
     {
         for (int i = 0; i < last_idx; i++)
         {
-            if ((*(elements[i])).id == node.id)
+            if (elements[i].id == node.id)
                 return true;
         }
         return false;
@@ -58,31 +59,43 @@ public:
 class hashMazeNode
 {
 public:
-    mazeNode *elements[MAZE_NUMBER_CELLS];
-    hashMazeNode()
+    mazeNode elements[MAZE_NUMBER_CELLS];
+    void reset()
     {
         for (int i = 0; i < MAZE_NUMBER_CELLS; i++)
         {
-            mazeNode emptyNode;
-            elements[i] = &emptyNode;
+            elements[i].id = -1;
         }
     }
     void add(mazeNode node)
     {
-        *(elements[node.id]) = node;
+        elements[node.id].id = node.id;
+        elements[node.id].square = node.square;
+        elements[node.id].parent = node.parent;
+        elements[node.id].cost = node.cost;
+    }
+    void add2(int id, mazeNode parent, int cost, MazeSquare *square)
+    {
+        elements[id].id = id;
+        elements[id].square = square;
+        elements[id].parent = parent.id;
+        elements[id].cost = cost;
     }
     mazeNode *get(int id)
     {
-        return elements[id];
+        return &elements[id];
     }
     bool has(mazeNode node)
     {
-        return ((*(elements[node.id])).id != -1);
+        return (elements[node.id].id != -1);
     }
 };
 
+int geti(int id);
+int getj(int id);
 int genId(const MazeSquare *start_);
-void getNeighborS(mazeNode *workingNode_, listMazeNode *res, Gladiator *glad);
+void getNeighborS(mazeNode *workingNode_, Gladiator *glad);
 mazeNode extractMinCost(listMazeNode *frontier, Gladiator *glad);
 int cost(mazeNode nodeA, mazeNode nodeB);
 hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad);
+void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);
