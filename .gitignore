@@ -12,3 +12,4 @@ ghost.bat
 ghost.sh
 README.rst
 /platformio.ini
+/memory.bin
