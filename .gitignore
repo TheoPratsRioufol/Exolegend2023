@@ -6,7 +6,9 @@
 docs
 examples
 images
-libs
+libs/gladiator_esp32
+libs/gladiator_x86
 ghost.bat
+ghost.sh
 README.rst
-platformio.ini
+/platformio.ini
