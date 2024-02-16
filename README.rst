@@ -1,8 +1,8 @@
 .. |preinstall_link| replace:: https://gitlab.com/exolegend/preinstall/
 .. |git_link_windws| replace:: https://www.git-scm.com/download/win
 
-.. |git_exolegend| replace:: git@gitlab.com:exolegend/exolegend.git
-.. |git_exolegend_win| replace:: git@gitlab.com:exolegend/exolegend-win.git
+.. |git_exolegend| replace:: git@gitlab-design.exotec.com:mohamed.alglawi/exolegend.git
+.. |git_exolegend_win| replace:: git@gitlab-design.exotec.com:mohamed.alglawi/exolegend-win.git
 
 .. |version| replace:: 2.0.3-rc3
 .. |virtuals_password| replace:: __LeM0tDePa55eLePlusS1mpleDuM0nde_!!!_;)
@@ -158,11 +158,9 @@ Le freeMode permet de débrider le **Gladiator**, cela permet de le faire foncti
 Afin de récupérer le code, il est conseillé d'installer git et de créer un compte GitLab.
 
 
-Installer Git sous **linux**:
-
-    .. code-block:: bash
-
-        sudo apt install git
+| Sous **Windows** pour installer git il faut aller sur ce lien : |git_link_windws|
+| Il faudra ensuite clicker sur le lien **64-bit Git for Windows Setup**. Lorsque le téléchargement est fini
+  ouvrir l'éxecutable d'installation et suivez les étapes d'installation (prendre les options par défaut).
 
 
 Cloner le repo d'Exolegend
@@ -192,7 +190,7 @@ qui se trouve en ligne sur votre machine en local)
 
     .. parsed-literal::
 
-        git clone |git_exolegend|
+        git clone |git_exolegend_win|
 
 
 Comment obtenir les mises à jour
@@ -251,7 +249,7 @@ Lancer le simulateur
 
         .. code-block:: bash
             
-            ./launcher.sh
+            ./launcher.bat
 
 
 Si les deux fenêtres s'affichent comme ci-dessous; c'est que vous avez
@@ -274,7 +272,7 @@ Vérification de votre installation
     * Allez dans le dossier du repo d'exolegend
         .. code-block:: bash
 
-            cd exowork/exolegend
+            cd exowork/exolegend-win
 
     * Ouvrez Visual Studio Code
         .. code-block:: bash
@@ -332,7 +330,7 @@ Dans la console qui apparait, tapez la commande suivante:
 
 .. code-block:: bash
 
-    ./ghost.sh
+    ./ghost.bat
 
 
 Voici l'output que doit donner cette commande si tout se passe bien :
