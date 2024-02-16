@@ -41,7 +41,7 @@ int cost(mazeNode nodeA, mazeNode nodeB)
     return 1;
 }
 
-hashMazeNode *solve(const MazeSquare *start_)
+hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad)
 {
     mazeNode start;
     start.square = start_;
@@ -52,6 +52,8 @@ hashMazeNode *solve(const MazeSquare *start_)
     frontier->push(start);
     costs->add(start);
 
+    glad->log("call");
+
     mazeNode workingNode;
     mazeNode nextNode;
     mazeNode newNodeUpdated;
@@ -60,6 +62,9 @@ hashMazeNode *solve(const MazeSquare *start_)
     {
         workingNode = extractMinCost(frontier);
         listMazeNode neighbors = getNeighborS(workingNode);
+        neighbors.print(glad);
+        glad->log("l = %d", frontier->len());
+
         for (int i = 0; i < neighbors.len(); i++)
         {
             nextNode = neighbors.get(i);

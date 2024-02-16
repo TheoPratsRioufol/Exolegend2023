@@ -16,7 +16,7 @@ class listMazeNode
 {
 public:
     mazeNode elements[MAZE_NUMBER_CELLS];
-    int last_idx = -1;
+    int last_idx = 0;
     void push(mazeNode node)
     {
         elements[last_idx++] = node;
@@ -41,6 +41,15 @@ public:
                 return true;
         }
         return false;
+    }
+    void print(Gladiator *glad)
+    {
+        String msg = "";
+        for (int k = 0; k < last_idx; k++)
+        {
+            msg += String(elements[k].square->i) + " - ";
+        }
+        glad->log(msg.c_str());
     }
 };
 
@@ -73,4 +82,4 @@ public:
 listMazeNode getNeighborS(mazeNode workingNode_);
 mazeNode extractMinCost(listMazeNode *frontier);
 int cost(mazeNode nodeA, mazeNode nodeB);
-hashMazeNode *solve(const MazeSquare *start_);
+hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad);
