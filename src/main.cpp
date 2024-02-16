@@ -1,12 +1,46 @@
 #include "gladiator.h"
-#include "Maze_utils.h"
 Gladiator* gladiator;
-void reset();
-void setup() {
-    //instanciation de l'objet gladiator
-    gladiator = new Gladiator();
-    //enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
-    gladiator->game->onReset(&reset); // GFA 4.4.1
+
+float kw = 1.2;
+float kv = 1.f;
+float wlimit = 3.f;
+float vlimit = 0.6;
+float erreurPos = 0.07;
+
+double reductionAngle(double x)
+{
+    x = fmod(x + PI, 2 * PI);
+    if (x < 0)
+        x += 2 * PI;
+    return x - PI;
+}
+void go_to(Position cons, Position pos)
+{
+    double consvl, consvr;
+    double dx = cons.x - pos.x;
+    double dy = cons.y - pos.y;
+    double d = sqrt(dx * dx + dy * dy);
+
+    if (d > erreurPos)
+    {
+        double rho = atan2(dy, dx);
+        double consw = kw * reductionAngle(rho - pos.a);
+
+        double consv = kv * d * cos(reductionAngle(rho - pos.a));
+        consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
+        consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
+
+        consvl = consv - gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
+        consvr = consv + gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
+    }
+    else
+    {
+        consvr = 0;
+        consvl = 0;
+    }
+
+    gladiator->control->setWheelSpeed(WheelAxis::RIGHT, consvr, false); // GFA 3.2.1
+    gladiator->control->setWheelSpeed(WheelAxis::LEFT, consvl, false);  // GFA 3.2.1
 }
 
 void reset() {
@@ -15,43 +49,24 @@ void reset() {
     gladiator->log("Call of reset function"); // GFA 4.5.1
 }
 
-void loop()
-{
-    if (gladiator->game->isStarted())
-    { // tester si un match à déjà commencer
-        // code de votre stratégie
-        //gladiator->log("Hello world - Game Started"); // GFA 4.5.1
-        const MazeSquare* current_square = gladiator->maze->getNearestSquare();
-        gladiator->log("Current square: %d, %d", current_square->i, current_square->j);
-        // get adjacent squares
-        const MazeSquare* adjacent_squares[4] = {
-            current_square->northSquare,
-            current_square->southSquare,
-            current_square->eastSquare,
-            current_square->westSquare};
-        for (const auto& adjacent_square : adjacent_squares)
-        {
-            if (adjacent_square != nullptr)
-            {
-                gladiator->log("Adjacent square: %d, %d", adjacent_square->i, adjacent_square->j);
-            }
-        }
-        const MazeSquare* target = gladiator->maze->getSquare(0, 0);
-        MazeSquare* shortest_path[144];
-        uint8_t shortest_path_length = 0;
-        get_shortest_path(gladiator, current_square, target, shortest_path, shortest_path_length);
-        gladiator->log("Shortest path length: %d", shortest_path_length);
-        for (uint8_t i = 0; i < shortest_path_length; i++)
-        {
-            gladiator->log("Shortest path square: %d, %d", shortest_path[i]->i, shortest_path[i]->j);
-        }
-        delay(2000);
-
-    }
-    else
-    {
-        gladiator->log("Hello world - Game not Startd yet"); // GFA 4.5.1
-        delay(300);
-    }
-    //delay(300);
+void setup() {
+    //instanciation de l'objet gladiator
+    gladiator = new Gladiator();
+    //enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
+    gladiator->game->onReset(&reset); // GFA 4.4.1
 }
+
+void loop() {
+    if(gladiator->game->isStarted()) { //tester si un match à déjà commencer
+        //code de votre stratégie
+        Position myPosition = gladiator->robot->getData().position;
+        Position goal {2.1, 1.8, 0};
+        go_to(goal, myPosition);
+    }
+    delay(10);
+}
+
+
+
+
+
