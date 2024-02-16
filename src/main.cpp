@@ -27,11 +27,12 @@ void loop()
         const MazeSquare *current_square = gladiator->maze->getNearestSquare();
         // const MazeSquare *target = gladiator->maze->getSquare(0, 0);
         // gladiator->log("Shortest path squa");
+        gladiator->log("COMPUTE START");
         hashMazeNode *mazeCosts = solve(current_square, gladiator);
 
-        for (uint8_t i = 0; i < MAZE_NUMBER_CELLS; i++)
+        for (int i = 0; i < MAZE_NUMBER_CELLS; i++)
         {
-            gladiator->log("Shortest path square: %d, %d", i, mazeCosts->get(i).cost);
+            // gladiator->log("Shortest path square: %d, %d", i, mazeCosts->get(i).cost);
         }
         gladiator->log("END");
         while (1)

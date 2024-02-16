@@ -1,6 +1,7 @@
 #include "gladiator.h"
 
-#define MAZE_NUMBER_CELLS 16 * 16
+#define NB_ROW 16
+#define MAZE_NUMBER_CELLS NB_ROW *NB_ROW
 #define MAX_COST 10000
 
 struct mazeNode
@@ -15,21 +16,23 @@ struct mazeNode
 class listMazeNode
 {
 public:
-    mazeNode elements[MAZE_NUMBER_CELLS];
+    mazeNode *elements[MAZE_NUMBER_CELLS];
     int last_idx = 0;
     void push(mazeNode node)
     {
-        elements[last_idx++] = node;
+        elements[last_idx] = &node;
+        last_idx++;
     }
-    mazeNode pop()
+    mazeNode *pop()
     {
-        return elements[last_idx--];
+        last_idx--;
+        return elements[last_idx];
     }
     int len()
     {
         return last_idx;
     }
-    mazeNode get(int idx)
+    mazeNode *get(int idx)
     {
         return elements[idx];
     }
@@ -37,49 +40,49 @@ public:
     {
         for (int i = 0; i < last_idx; i++)
         {
-            if (elements[i].id == node.id)
+            if ((*(elements[i])).id == node.id)
                 return true;
         }
         return false;
     }
     void print(Gladiator *glad)
     {
-        String msg = "";
+        /*
         for (int k = 0; k < last_idx; k++)
         {
-            msg += String(elements[k].square->i) + " - ";
-        }
-        glad->log(msg.c_str());
+            glad->log("blk = %d ", (*(elements[k])).square->i);
+        }*/
     }
 };
 
 class hashMazeNode
 {
 public:
-    mazeNode elements[MAZE_NUMBER_CELLS];
+    mazeNode *elements[MAZE_NUMBER_CELLS];
     hashMazeNode()
     {
         for (int i = 0; i < MAZE_NUMBER_CELLS; i++)
         {
             mazeNode emptyNode;
-            elements[i] = emptyNode;
+            elements[i] = &emptyNode;
         }
     }
     void add(mazeNode node)
     {
-        elements[node.id] = node;
+        *(elements[node.id]) = node;
     }
-    mazeNode get(int id)
+    mazeNode *get(int id)
     {
         return elements[id];
     }
-    boolean has(mazeNode node)
+    bool has(mazeNode node)
     {
-        return elements[node.id].id != -1;
+        return ((*(elements[node.id])).id != -1);
     }
 };
 
-listMazeNode getNeighborS(mazeNode workingNode_);
-mazeNode extractMinCost(listMazeNode *frontier);
+int genId(const MazeSquare *start_);
+void getNeighborS(mazeNode *workingNode_, listMazeNode *res, Gladiator *glad);
+mazeNode extractMinCost(listMazeNode *frontier, Gladiator *glad);
 int cost(mazeNode nodeA, mazeNode nodeB);
 hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad);
