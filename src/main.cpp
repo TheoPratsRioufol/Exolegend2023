@@ -2,11 +2,13 @@
 
 // #include "Utils/graph.h"
 #include "Utils/motors.h"
+#include "Utils/RocketMonitoring.h"
 
 #define TIME_SKRINK 15000
 #define LEN_PATH_STRAT 2
 
 Gladiator *gladiator;
+RocketMonitoring *rocketMonitoring;
 
 unsigned long timer = 0;
 int length = 2;
@@ -74,6 +76,8 @@ void reset()
     getDirStack();
     timer = millis();
 
+    rocketMonitoring = new RocketMonitoring();
+
     gladiator->log("ResetDone");
 }
 
@@ -100,6 +104,10 @@ void loop() {
     if(gladiator->game->isStarted()) { //tester si un match à déjà commencer
         //code de votre stratégie   
         
+        // print info about RocketMonitoring
+        rocketMonitoring->monitoring_loop(gladiator);
+        rocketMonitoring->print_info(gladiator);
+
         if(gladiator->weapon->canLaunchRocket()){
             robot_id_to_fire = closestRobotEnemy(gladiator);
             count = motor_handleMvt(arr, count, length, gladiator, deleted, true, robot_id_to_fire);
@@ -112,7 +120,7 @@ void loop() {
             gladiator->log("Finish path, starting new one");
             getDirStack();
         }
-        delay(10);
+        // delay(10);
     }
     // delay(40);
 }

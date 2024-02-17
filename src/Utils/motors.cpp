@@ -96,11 +96,11 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
         consvr = consv + gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
 
 
-        gladiator->log("angle diff = %f",reductionAngle(rho - pos.a));
-        if (reductionAngle(rho - pos.a)> PI/12){
-            consvl = -0.3 * reductionAngle(rho - pos.a)/PI;
-            consvr = 0.3 * reductionAngle(rho - pos.a)/PI;
-        }
+        // gladiator->log("angle diff = %f",reductionAngle(rho - pos.a));
+        // if (reductionAngle(rho - pos.a)> PI/12){
+        //     consvl = -0.3 * reductionAngle(rho - pos.a)/PI;
+        //     consvr = 0.3 * reductionAngle(rho - pos.a)/PI;
+        // }
     }
     else
     {
@@ -159,12 +159,12 @@ int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *glad
         Position pos_other = gladiator->game->getOtherRobotData(robot_id).position;
         // log de la position de l'autre robot
         // log de l'id
-        gladiator->log("ID de l'autre robot : %d", robot_id);
-        gladiator->log("Position de l'autre robot : %f, %f", pos_other.x, pos_other.y);
+        // gladiator->log("ID de l'autre robot : %d", robot_id);
+        // gladiator->log("Position de l'autre robot : %f, %f", pos_other.x, pos_other.y);
         Position pos = gladiator->robot->getData().position;
         double rho = atan2(pos_other.y - pos.y, pos_other.x - pos.x);
         // log de rho
-        gladiator->log("Rho : %f", rho);
+        // gladiator->log("Rho : %f", rho);
         Position target = {pos.x, pos.y, rho};
         go_to_angle(rho, pos.a, gladiator);
         if (abs(reductionAngle(rho - pos.a)) < 1*DEG_TO_RAD) {
@@ -180,13 +180,13 @@ int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *glad
         {
             return -1;
         }
-        gladiator->log("Next Goal = %d,%d", listPos[count - 1].i, listPos[count - 1].j);
+        // gladiator->log("Next Goal = %d,%d", listPos[count - 1].i, listPos[count - 1].j);
         goal = getSquareCoor(gladiator->maze->getSquare(listPos[count - 1].i, listPos[count - 1].j));
         // si on va dans le mur on change de start
-        if (isBoundarie(listPos[count - 1].i, listPos[count - 1].j, deleted) && (length - count - 1 > 1))
-        {
-            return -1;
-        }
+        // if (isBoundarie(listPos[count - 1].i, listPos[count - 1].j, deleted) && (length - count - 1 > 1))
+        // {
+        //     return -1;
+        // }
         return count - 1;
     }
     return count;
@@ -198,11 +198,11 @@ unsigned char closestRobotEnemy(Gladiator *gladiator){
     unsigned char closestRobot = 0;
     float minDist = 10;
     // log RobotList
-    gladiator->log("RobotList : %d, %d, %d", robotList.ids[0], robotList.ids[1], robotList.ids[2], robotList.ids[3]);
+    // gladiator->log("RobotList : %d, %d, %d", robotList.ids[0], robotList.ids[1], robotList.ids[2], robotList.ids[3]);
 
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 4; i++) {
         if(gladiator->game->getOtherRobotData(robotList.ids[i]).lifes){
-            gladiator->log("ID de l'autre robot : %d", robotList.ids[i]);
+            // gladiator->log("ID de l'autre robot : %d", robotList.ids[i]);
             if (gladiator->game->getOtherRobotData(robotList.ids[i]).teamId != gladiator->robot->getData().teamId) {
                 Position pos_other = gladiator->game->getOtherRobotData(robotList.ids[i]).position;
                 float dist = distance(pos, pos_other);
@@ -213,6 +213,6 @@ unsigned char closestRobotEnemy(Gladiator *gladiator){
             }
         }
     }
-    gladiator->log("got closest robot : %d", closestRobot);
+    // gladiator->log("got closest robot : %d", closestRobot);
     return closestRobot;
 }
