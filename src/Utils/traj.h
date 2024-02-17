@@ -14,6 +14,10 @@ struct mazeNode
     MazeSquare *square;
 };
 
+struct Coor{
+    int i, j;
+};
+
 class listMazeNode
 {
 public:
@@ -91,6 +95,7 @@ public:
     }
 };
 
+int genId(int i, int j);
 int geti(int id);
 int getj(int id);
 int genId(const MazeSquare *start_);
@@ -99,3 +104,4 @@ mazeNode extractMinCost(listMazeNode *frontier, Gladiator *glad);
 int cost(mazeNode nodeA, mazeNode nodeB);
 hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad);
 void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);
+int genPath(Coor *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);

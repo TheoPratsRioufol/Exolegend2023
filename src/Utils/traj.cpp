@@ -71,7 +71,12 @@ int cost(mazeNode nodeA, mazeNode nodeB)
 
 int genId(const MazeSquare *start_)
 {
-    return start_->i * NB_ROW + start_->j;
+    return genId(start_->i,start_->j);
+}
+
+int genId(int i, int j)
+{
+    return i * NB_ROW +j;
 }
 
 int geti(int id) {
@@ -92,10 +97,10 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad)
     //costs = *GlobalCost;
     GlobalCost.reset();
     frontier.push(start);
-    glad->log("PUSH ptr = %d", frontier.get(0));
+    //glad->log("PUSH ptr = %d", frontier.get(0));
     GlobalCost.add(start);
 
-    glad->log("call inside solve");
+    //glad->log("call inside solve");
 
     mazeNode workingNode;
     mazeNode nextNode;
@@ -125,7 +130,7 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad)
            // glad->log("next node = %d",nextNode.id);
             if (!GlobalCost.has(nextNode))
             {
-                glad->log("add node = %d",nextNode.id);
+                //glad->log("add node = %d",nextNode.id);
                 frontier.push(nextNode);
             }
             int newCost = GlobalCost.get(workingNode.id)->cost + cost(workingNode, nextNode);
@@ -134,11 +139,11 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad)
                // glad->log("COST BEFORE ADD has = %d with %d",costs->has(nextNode),costs->elements[nextNode.id].id);
                 GlobalCost.add2(nextNode.id, workingNode, newCost, nextNode.square);
                // glad->log("COST ADD has = %d with %d",costs->has(nextNode),costs->elements[nextNode.id].id);
-                glad->log("this %d parent %d, R parent %d",nextNode.id,workingNode.id,GlobalCost.get(nextNode.id)->parent);
+                //glad->log("this %d parent %d, R parent %d",nextNode.id,workingNode.id,GlobalCost.get(nextNode.id)->parent);
             }
         }
     }
-    glad->log("cend while");
+   // glad->log("cend while");
 
     return &GlobalCost;
 }
@@ -147,6 +152,8 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad)
 void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad) {
     mazeNode *prevNode = &B;
     glad->log("Go to %d",B.id);
+    if (B.id == A.id)
+    return;
     for (int i = 0; i < MAZE_NUMBER_CELLS; i++) {
         int nextid = costs->get(prevNode->id)->parent;
         glad->log("Go %d, %d before ! (id=%d) %d",geti(nextid),getj(nextid),prevNode->id,nextid);
@@ -155,4 +162,26 @@ void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad) {
         }
         prevNode = costs->get(nextid);
     }
+}
+
+int genPath(Coor *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad) {
+    mazeNode *prevNode = &B;
+    //pointMission[0] = Coor{geti(A.id),getj(A.id)};
+    int length_ = 1;
+    if (B.id == A.id) {
+        pointMission[0] = Coor{geti(A.id),getj(A.id)};
+    return 0;
+    }
+    for (int i = 0; i < MAZE_NUMBER_CELLS; i++) {
+        int nextid = costs->get(prevNode->id)->parent;
+        glad->log("Go %d, %d before ! (id=%d) %d",geti(nextid),getj(nextid),prevNode->id,nextid);
+        if (nextid == A.id) {
+            break;
+        }
+        prevNode = costs->get(nextid);
+        pointMission[i] = Coor{geti(nextid),getj(nextid)};
+        length_ ++;
+    }
+    pointMission[length_-1] = Coor{geti(A.id),getj(A.id)};
+    return length_;
 }
