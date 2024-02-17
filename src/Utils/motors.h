@@ -5,20 +5,21 @@
 
 #include "Utils/graph.h"
 
-
 #define THRESHOLD 0.1
 
-enum SquareEdge{
-    NORTH,    SOUTH,
-    EAST,     WEST,
+enum SquareEdge
+{
+    NORTH,
+    SOUTH,
+    EAST,
+    WEST,
     CENTER
 };
 
-
 void reset_motors(const MazeSquare *firstSquare, float squareSize_, Gladiator *gladiator);
-Position getSquareCoor(const MazeSquare *square, SquareEdge edge  = CENTER);
+Position getSquareCoor(const MazeSquare *square, SquareEdge edge = CENTER);
 double reductionAngle(double x);
 void go_to(Position cons, Position pos, Gladiator *gladiator);
 bool checksquare(const MazeSquare *square);
-int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator, int deleted);
+void motor_handleMvt(WayToGo *wayToGo, Gladiator *gladiator, int deleted);
 float distance(const Position &p1, const Position &p2);

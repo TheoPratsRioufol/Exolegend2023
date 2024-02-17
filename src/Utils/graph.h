@@ -4,6 +4,7 @@
 #define NB_ROW 12
 #define MAZE_NUMBER_CELLS NB_ROW *NB_ROW
 #define MAX_COST 10000
+#define SIZE_MAX_WAY 80
 
 #define DEFAULT_STATE EAT_AS_POSSIBLE
 
@@ -21,6 +22,70 @@ struct SimpleCoord
     int j;
 };
 
+class WayToGo
+{
+public:
+    SimpleCoord coordsInverted[SIZE_MAX_WAY];
+    SimpleCoord coordsShorted[SIZE_MAX_WAY];
+    int current_idx = 0;
+    int currentShorted_idx = 0;
+    int length = 0;
+    int lengthShorted = 0;
+    void moveToNext()
+    {
+        currentShorted_idx++;
+    }
+    SimpleCoord getNext()
+    {
+        return coordsShorted[currentShorted_idx];
+    }
+    void simplify()
+    {
+        int count_short = 0;
+        coordsShorted[0] = coordsInverted[length - 1];
+        for (int i = 1; i < length - 1; i++)
+        {
+            if (!(((coordsInverted[length - 2 - i].i == coordsInverted[length - 1 - i].i) && (coordsInverted[length - 1 - i].i == coordsInverted[length - i].i)) || ((coordsInverted[length - 2 - i].j == coordsInverted[length - 1 - i].j) && (coordsInverted[length - 1 - i].j == coordsInverted[length - i].j))))
+            {
+                count_short++;
+                coordsShorted[count_short] = coordsInverted[length - 1 - i];
+            }
+        }
+        count_short++;
+        coordsShorted[count_short] = coordsInverted[0];
+        lengthShorted = count_short + 1;
+        currentShorted_idx = 0;
+    }
+    void reset()
+    {
+        current_idx = 0;
+        currentShorted_idx = 0;
+        length = 0;
+        lengthShorted = 0;
+    }
+    int getLengthInverted()
+    {
+        return length;
+    }
+    int getLengthSorted()
+    {
+        return lengthShorted;
+    }
+    void pushArr(SimpleCoord *arr, int lenArr)
+    {
+        for (int i = 0; i < lenArr; i++)
+        {
+            coordsInverted[i] = arr[i];
+        }
+        length = lenArr;
+    }
+
+    bool hasFinish()
+    {
+        return (lengthShorted == 0) || (currentShorted_idx >= lengthShorted);
+    }
+};
+
 struct mazeNode
 {
     // mazeNode *parent = nullptr;
@@ -29,6 +94,7 @@ struct mazeNode
     int stopCriteria = 0;
     int id = -1;
     bool haveParent = false;
+    int cheminsNb = 0;
     MazeSquare *square;
 };
 
@@ -93,13 +159,14 @@ public:
         elements[node.id].parent = node.parent;
         elements[node.id].cost = node.cost;
     }
-    void add2(int id, mazeNode parent, int cost, MazeSquare *square, int stopCriteria_)
+    void add2(int id, mazeNode parent, int cost, MazeSquare *square, int stopCriteria_, int newcheminsNb_)
     {
         elements[id].id = id;
         elements[id].square = square;
         elements[id].parent = parent.id;
         elements[id].cost = cost;
         elements[id].stopCriteria = stopCriteria_;
+        elements[id].cheminsNb = newcheminsNb_;
     }
     mazeNode *get(int id)
     {

@@ -3,7 +3,7 @@
 float kw = 5.0f;
 float kv = 1.5f;
 float wlimit = 5.f;
-float vlimitMax = .6f;
+float vlimitMax = .3f;
 float vlimitMin = .1f;
 float erreurPos = 0.01;
 float dRampe = 0.5;
@@ -84,18 +84,13 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
     double dx = cons.x - pos.x;
     double dy = cons.y - pos.y;
     double d = sqrt(dx * dx + dy * dy);
+    float vlimit = vlimitMax;
 
     if (d > erreurPos)
     {
         double rho = atan2(dy, dx);
         double consw = kw * reductionAngle(rho - pos.a);
 
-        if (d < dRampe) {
-            float vlimit = max;
-        } else {
-            float vlimit = vlimitMax;
-        }
-        
         double consv = kv * d * cos(reductionAngle(rho - pos.a));
         consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
         consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
@@ -103,7 +98,7 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
         consvl = consv - gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
         consvr = consv + gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
 
-        //gladiator->log("angle diff = %f",reductionAngle(rho - pos.a));
+        // gladiator->log("angle diff = %f",reductionAngle(rho - pos.a));
         /*
         if (reductionAngle(rho - pos.a)> PI/12){
             consvl = -0.3 * reductionAngle(rho - pos.a)/PI;
@@ -137,29 +132,24 @@ bool checksquare(const MazeSquare *square)
     return false;
 }
 
-int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator, int deleted)
+void motor_handleMvt(WayToGo *wayToGo, Gladiator *gladiator, int deleted)
 {
     current = gladiator->robot->getData().position;
     go_to(goal, current, gladiator);
-    //gladiator->log("Goal=%f,%f cur=%d,%d c %d l%d", goal.x, goal.y, gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j, count,length);
-    if (distance(current, goal) <= THRESHOLD && count < length)
+    // gladiator->log("Goal=%f,%f cur=%d,%d L=%d", goal.x, goal.y, gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j, wayToGo->getLengthSorted());
+    if (distance(current, goal) <= THRESHOLD && !(wayToGo->hasFinish()))
     {
-        if (count + 1 >= length)
+        wayToGo->moveToNext();
+        if (wayToGo->hasFinish())
         {
-            return -1;
+            return;
         }
-        gladiator->log("Next Goal = %d,%d", listPos[count + 1].i, listPos[count + 1].j);
-        goal = getSquareCoor(gladiator->maze->getSquare(listPos[count + 1].i, listPos[count + 1].j));
+        gladiator->log("Next Goal = %d,%d L%d,C%d", wayToGo->getNext().i, wayToGo->getNext().j, wayToGo->getLengthSorted(), wayToGo->currentShorted_idx);
+        goal = getSquareCoor(gladiator->maze->getSquare(wayToGo->getNext().i, wayToGo->getNext().j));
         // si on va dans le mur on change de start
-        if (isBoundarie(listPos[count + 1].i, listPos[count + 1].j, deleted) && (count > 100000000))
+        if (isBoundarie(wayToGo->getNext().i, wayToGo->getNext().j, deleted) && (false))
         {
-            return -1;
+            return;
         }
-        if (count + 1 >= length)
-        {
-            return -1;
-        }
-        return count+1;
     }
-    return count;
 }
