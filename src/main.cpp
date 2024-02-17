@@ -4,18 +4,22 @@
 #include "Utils/motors.h"
 #include "Utils/RocketMonitoring.h"
 
-#define TIME_SKRINK 15000
-#define LEN_PATH_STRAT 2
+#define TIME_SKRINK 20000
+#define TIME_ESCAPE_BOUND 12000
+#define LEN_PATH_STRAT 4
 
 Gladiator *gladiator;
 RocketMonitoring *rocketMonitoring;
 
 unsigned long timer = 0;
-int length = 2;
-int count = length - 1;
-int deleted = 0;
-SimpleCoord arr[80]; //= {Coor{0, 2}, Coor{3, 3}};
-SimpleCoord arrShorted[80]; //= {Coor{0, 2}, Coor{3, 3}};
+unsigned long dateOfLastShrink = 0;
+int deleted = 1;
+States myState = DEFAULT_STATE;
+
+SimpleCoord arr[SIZE_MAX_WAY]; //= {Coor{0, 2}, Coor{3, 3}};
+// SimpleCoord arrShorted[80]; //= {Coor{0, 2}, Coor{3, 3}};
+
+WayToGo wayToGo;
 
 bool start = true;
 
@@ -26,12 +30,31 @@ void getDirStack()
 
     const MazeSquare *current_square = gladiator->maze->getNearestSquare();
     gladiator->log("Get New Strategy ================");
-    hashMazeNode *mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted); // assure que l'on est en dessous du critère
+    hashMazeNode *mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted, myState); // assure que l'on est en dessous du critère
 
     // on cherche le meilleur candidat qui minimise le cout et respecte la target
     int bestTarget = genId(current_square);
-    int minCost = mazeCosts->get(bestTarget)->cost;
+    int minCost = MAX_COST;
+    int minCheminsNb = 1000;
     int maxCriteria = 0;
+
+    /*if ((myState == ESCAPE_BOUND))
+    {
+        gladiator->log("target is CENTER");
+        for (int k = 0; k < MAZE_NUMBER_CELLS; k++)
+        {
+            mazeNode *candidate = mazeCosts->get(k);
+            if (!isBoundarie(mazeCosts->get(k)->square->i, mazeCosts->get(k)->square->j, deleted) && (candidate->cost < minCost))
+            {
+                gladiator->log("get better cost than %d", minCost);
+                bestTarget = k;
+                minCost = candidate->cost;
+                // minCheminsNb = candidate->cheminsNb;
+            }
+        }
+    }
+    else
+    {*/
     for (int k = 0; k < MAZE_NUMBER_CELLS; k++)
     {
         mazeNode *candidate = mazeCosts->get(k);
@@ -47,6 +70,7 @@ void getDirStack()
             bestTarget = k;
         }
     }
+    //}
 
     // on génère le path correspondant
     mazeNode A;
@@ -54,33 +78,27 @@ void getDirStack()
     mazeNode B;
     B.id = bestTarget;
 
-    length = genPath(arr, mazeCosts, A, B, gladiator);
-    count = length - 1;
+    int length = genPath(arr, mazeCosts, A, B, gladiator);
 
-    gladiator->log("Choosen Path, stopCriteria = %d", maxCriteria);
+    gladiator->log("Choosen Path, stopCriteria = %d Min chemin%d", maxCriteria, minCheminsNb);
     for (int k = 0; k < length; k++)
     {
         gladiator->log("CP %d(%d) = %d,%d", k, genId(arr[k].i, arr[k].j), arr[k].i, arr[k].j);
     }
 
+    if (length > 40)
+    {
+        B.id = B.id - 1;
+        length = genPath(arr, mazeCosts, A, B, gladiator);
+    }
+
     gladiator->log("Goal (trg=%d) cap=%d criteria=%d", bestTarget, (mazeCosts->get(bestTarget)->square->possession == gladiator->robot->getData().teamId), mazeCosts->get(bestTarget)->stopCriteria);
     gladiator->log("%d : cap=%d by maze", bestTarget, (gladiator->maze->getSquare(geti(bestTarget), getj(bestTarget))->possession == gladiator->robot->getData().teamId));
 
+    wayToGo.pushArr(arr, length);
+
     // Contracter l'array des coordonnées à parcourir en arrShorted :
-    arrShorted[0] = arr[length-1];
-    int count_short = 0;
-    for (int i = 1; i < length-1; i++)
-    {
-        if (!(((arr[length-2-i].i == arr[length-1-i].i) && (arr[length-1-i].i == arr[length-i].i)) || ((arr[length-2-i].j == arr[length-1-i].j) && (arr[length-1-i].j == arr[length-i].j)))){
-            count_short++;
-            arrShorted[count_short] = arr[length-1-i];
-            gladiator->log("add %d,%d at %d",arr[length-1-i].i,arr[length-1-i].j,i);
-        }
-    }
-    count_short++;
-    arrShorted[count_short] = arr[0];
-    length = count_short+1;
-    count = 0;
+    wayToGo.simplify();
 }
 
 void reset()
@@ -92,7 +110,7 @@ void reset()
     reset_motors(current_square, size, gladiator);
 
     getDirStack();
-    timer = millis();
+    dateOfLastShrink = millis();
 
     rocketMonitoring = new RocketMonitoring();
 
@@ -101,44 +119,55 @@ void reset()
 
 void lookWatch()
 {
-    // deleted++;
-    if ((deleted < 5) && (millis() > timer))
+    if ((myState != ESCAPE_BOUND) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
+    {
+        myState = ESCAPE_BOUND;
+        gladiator->log("Mode ESCAPE_BOUND");
+        getDirStack();
+    }
+    if (millis() - dateOfLastShrink > TIME_SKRINK)
     {
         deleted++;
-        timer = millis() + TIME_SKRINK;
-        gladiator->log("ARENA SCRINK");
-   }
+        dateOfLastShrink = millis();
+        myState = EAT_AS_POSSIBLE;
+        getDirStack();
+        gladiator->log("Mode EAT_AS_POSSIBLE");
+    }
 }
 
-
-void setup() {
-    //instanciation de l'objet gladiator
+void setup()
+{
+    // instanciation de l'objet gladiator
     gladiator = new Gladiator();
-    //enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
+    // enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
     gladiator->game->onReset(&reset); // GFA 4.4.1
 }
 unsigned char robot_id_to_fire = 0;
-void loop() {
-    if(gladiator->game->isStarted()) { //tester si un match à déjà commencer
-        //code de votre stratégie   
-        
+void loop()
+{
+    if (gladiator->game->isStarted())
+    { // tester si un match à déjà commencer
+        // code de votre stratégie
+
         // print info about RocketMonitoring
         rocketMonitoring->monitoring_loop(gladiator);
         rocketMonitoring->print_info(gladiator);
 
-        if(gladiator->weapon->canLaunchRocket()){
-            robot_id_to_fire = closestRobotEnemy(gladiator);
-            count = motor_handleMvt(arr, count, length, gladiator, deleted, true, robot_id_to_fire);
-        }else{
-            count = motor_handleMvt(arr, count, length, gladiator, deleted, false, 0);
-        }
-        lookWatch();
-
-        if (count == -1) {
-            gladiator->log("Finish path, starting new one");
+        if (wayToGo.hasFinish())
+        {
+            gladiator->log("Finish path, starting new one from %d,%d", geti(genId(gladiator->maze->getNearestSquare())), getj(genId(gladiator->maze->getNearestSquare())));
             getDirStack();
         }
+        if (gladiator->weapon->canLaunchRocket())
+        {
+            robot_id_to_fire = closestRobotEnemy(gladiator);
+            motor_handleMvt(&wayToGo, gladiator, deleted, true, robot_id_to_fire);
+        }
+        else
+        {
+            motor_handleMvt(&wayToGo, gladiator, deleted, false, 0);
+        }
+        lookWatch();
         delay(10);
     }
-    // delay(40);
 }

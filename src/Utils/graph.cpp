@@ -80,9 +80,20 @@ bool isBoundarie(mazeNode node, int deleted)
     return isBoundarie(node.square->i, node.square->j, deleted);
 }
 
-int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad)
+int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States state)
 {
-    return 1 + 10 * isBoundarie(nodeB, deleted) + 1 * (nodeB.square->possession == glad->robot->getData().teamId);
+    if (state == EAT_AS_POSSIBLE)
+        return 4 + 5 * (nodeB.square->possession == glad->robot->getData().teamId) + 5 * (nodeB.square->coin.value != 1);
+    else
+        return 6;
+    // return 1 + 1 * (nodeB.square->possession == glad->robot->getData().teamId);
+}
+
+int getAvancement(mazeNode nextNode, int deleted, States state, Gladiator *glad)
+{
+    if (state == ESCAPE_BOUND)
+        return (!isBoundarie(nextNode, deleted));
+    return (nextNode.square->possession != glad->robot->getData().teamId);
 }
 
 int genId(const MazeSquare *start_)
@@ -105,7 +116,7 @@ int getj(int id)
     return id % NB_ROW;
 }
 
-hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted)
+hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted, States state)
 {
     mazeNode start;
     start.square = (MazeSquare *)start_;
@@ -150,8 +161,8 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, i
             // glad->log("read neigborg %d of id = %d of %d", i, neighbors.get(i)->id, &neighbors.elements[i]);
             nextNode = *neighbors.get(i);
             // int avancement = nextNode.square->possession != glad->robot->getData().teamId;
-            int avancement = nextNode.square->coin.value == 1;
-            int newStopCriteria = GlobalCost.get(nextNode.id)->stopCriteria + avancement;
+            // getAvancement(nextNode) int avancement = nextNode.square->coin.value == 1;
+            int newStopCriteria = GlobalCost.get(nextNode.id)->stopCriteria + getAvancement(nextNode, deleted, state, glad);
 
             /*if (avancement == 1)
             {
@@ -167,12 +178,13 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, i
                     frontier.push(nextNode);
                 }
             }
-            int newCost = GlobalCost.get(workingNode.id)->cost + cost(workingNode, nextNode, deleted, glad);
+            int newCost = GlobalCost.get(workingNode.id)->cost + cost(workingNode, nextNode, deleted, glad, state);
+            int newcheminsNb = GlobalCost.get(workingNode.id)->cheminsNb + 1;
 
             if (!GlobalCost.has(nextNode) || GlobalCost.get(nextNode.id)->cost > newCost)
             {
                 // glad->log("COST BEFORE ADD has = %d with %d",costs->has(nextNode),costs->elements[nextNode.id].id);
-                GlobalCost.add2(nextNode.id, workingNode, newCost, nextNode.square, newStopCriteria);
+                GlobalCost.add2(nextNode.id, workingNode, newCost, nextNode.square, newStopCriteria, newcheminsNb);
                 // glad->log("COST ADD has = %d with %d",costs->has(nextNode),costs->elements[nextNode.id].id);
                 // glad->log("this %d parent %d, R parent %d",nextNode.id,workingNode.id,GlobalCost.get(nextNode.id)->parent);
             }
@@ -209,7 +221,7 @@ int genPath(SimpleCoord *pointMission, hashMazeNode *costs, mazeNode A, mazeNode
     for (int i = 1; i < MAZE_NUMBER_CELLS; i++)
     {
         int nextid = costs->get(prevNode->id)->parent;
-        glad->log("Go %d, %d before ! (id=%d) %d", geti(nextid), getj(nextid), prevNode->id, nextid);
+        // glad->log("Go %d, %d before ! (id=%d) %d", geti(nextid), getj(nextid), prevNode->id, nextid);
         length_++;
         if (nextid == A.id)
         {
