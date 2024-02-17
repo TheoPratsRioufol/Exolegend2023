@@ -149,7 +149,8 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, i
         {
             // glad->log("read neigborg %d of id = %d of %d", i, neighbors.get(i)->id, &neighbors.elements[i]);
             nextNode = *neighbors.get(i);
-            int avancement = nextNode.square->possession != glad->robot->getData().teamId;
+            // int avancement = nextNode.square->possession != glad->robot->getData().teamId;
+            int avancement = nextNode.square->coin.value == 1;
             int newStopCriteria = GlobalCost.get(nextNode.id)->stopCriteria + avancement;
 
             /*if (avancement == 1)
