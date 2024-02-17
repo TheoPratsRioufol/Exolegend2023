@@ -115,16 +115,22 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
 void go_to_angle(float cons_angle, float pos_angle, Gladiator *gladiator)
 {
     double consvl, consvr;
-
-    if (abs(reductionAngle(cons_angle-pos_angle)) > erreurPos_angle)
+    const float K = 0.5;
+    float diff_angle = reductionAngle(cons_angle-pos_angle);
+    if (abs(diff_angle) > erreurPos_angle)
     {
-        if(reductionAngle(cons_angle - pos_angle) > 0){
-            consvl = -0.3;
-            consvr = 0.3;
-        }else{
-            consvl = 0.3;
-            consvr = -0.3;
-        }
+        // if(diff_angle > 0){
+        //     consvl = -0.3;
+        //     consvr = 0.3;
+        // }else{
+        //     consvl = 0.3;
+        //     consvr = -0.3;
+        // }
+        consvl = - K * diff_angle;
+        consvr = K * diff_angle;
+
+        consvl = abs(consvl) > 0.3 ? (consvl > 0 ? 0.3 : -0.3) : consvl;
+        consvr = abs(consvr) > 0.3 ? (consvr > 0 ? 0.3 : -0.3) : consvr;
     }
     else
     {
@@ -156,16 +162,31 @@ int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *glad
 {
     current = gladiator->robot->getData().position;
     if(fireRocket) {
-        Position pos_other = gladiator->game->getOtherRobotData(robot_id).position;
+        RobotData robot_other = gladiator->game->getOtherRobotData(robot_id);
+        Position pos_other = robot_other.position;
         // log de la position de l'autre robot
         // log de l'id
         // gladiator->log("ID de l'autre robot : %d", robot_id);
         // gladiator->log("Position de l'autre robot : %f, %f", pos_other.x, pos_other.y);
         Position pos = gladiator->robot->getData().position;
-        double rho = atan2(pos_other.y - pos.y, pos_other.x - pos.x);
+        // double rho = atan2(pos_other.y - pos.y, pos_other.x - pos.x);
         // log de rho
         // gladiator->log("Rho : %f", rho);
-        Position target = {pos.x, pos.y, rho};
+        // Position target = {pos.x, pos.y, rho};
+
+        // predict future position of the robot according to nearest walls and the robot's speed
+        const MazeSquare* neerestSquare_enemy = gladiator->maze->getSquare(float(pos_other.x*12.0/3.0), float(pos_other.y*12.0/3.0));
+        float vl_other = robot_other.vl;
+        float vr_other = robot_other.vr;
+
+        //position next second if vl and vr constant
+        Position pos_other_future = {cos(pos_other.a) * (vl_other + vr_other) / 2 + pos_other.x, sin(pos_other.a) * (vl_other + vr_other) / 2 + pos_other.y, pos_other.a + (vr_other - vl_other) / gladiator->robot->getRobotRadius()};
+
+        double rho = atan2(pos_other_future.y - pos.y, pos_other_future.x - pos.x);
+
+
+
+
         go_to_angle(rho, pos.a, gladiator);
         if (abs(reductionAngle(rho - pos.a)) < 1*DEG_TO_RAD) {
             gladiator->weapon->launchRocket();
