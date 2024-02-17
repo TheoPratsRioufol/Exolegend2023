@@ -10,6 +10,7 @@ struct SimpleCoord{
     int j;
 };
 
+
 struct mazeNode
 {
     //mazeNode *parent = nullptr;

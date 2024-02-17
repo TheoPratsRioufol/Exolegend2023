@@ -5,7 +5,7 @@
 #include "Utils/RocketMonitoring.h"
 
 #define TIME_SKRINK 15000
-#define LEN_PATH_STRAT 3
+#define LEN_PATH_STRAT 2
 
 Gladiator *gladiator;
 RocketMonitoring *rocketMonitoring;
@@ -138,7 +138,7 @@ void loop() {
             gladiator->log("Finish path, starting new one");
             getDirStack();
         }
-        // delay(10);
+        delay(10);
     }
     // delay(40);
 }
