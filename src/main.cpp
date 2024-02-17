@@ -4,16 +4,25 @@
 #include "Utils/motors.h"
 #include "Utils/RocketMonitoring.h"
 
+#define I_RECOVERY 5
+#define J_RECOVERY 5
+
 #define TIME_SKRINK 20000
-#define TIME_ESCAPE_BOUND 16000
-#define LEN_PATH_STRAT 4
+#define TIME_ESCAPE_BOUND 15000
+#define TIME_NO_ACTION_ERROR 1000
+#define TIME_ESCAPE_BOUND_CRITICAL 18000
+#define LEN_PATH_STRAT 1
+#define DIST_NO_MOVE 0.02f
 
 Gladiator *gladiator;
 RocketMonitoring *rocketMonitoring;
 
 unsigned long timer = 0;
 unsigned long dateOfLastShrink = 0;
+unsigned long dateLastMove = 0;
 int deleted = 1;
+boolean nomove;
+Position lastPosition;
 States myState = DEFAULT_STATE;
 
 SimpleCoord arr[SIZE_MAX_WAY]; //= {Coor{0, 2}, Coor{3, 3}};
@@ -32,10 +41,19 @@ void getDirStack()
     gladiator->log("Get New Strategy ================");
     hashMazeNode *mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted, myState); // assure que l'on est en dessous du critère
 
+    if (myState == ESCAPE_BOUND)
+    {
+        gladiator->log("ESCAPE_BOUND mode");
+    }
+    else
+    {
+        gladiator->log("REGULAR mode");
+    }
+
     SimpleCoord current_pos{current_square->i, current_square->j};
     // on cherche le meilleur candidat qui minimise le cout et respecte la target
     int bestTarget = genId(current_square);
-    int minCost = MAX_COST;
+    float minCost = MAX_COST;
     int minCheminsNb = 1000;
     int maxCriteria = 0;
     float bestDist = MAZE_NUMBER_CELLS * 10;
@@ -60,23 +78,36 @@ void getDirStack()
     for (int k = 0; k < MAZE_NUMBER_CELLS; k++)
     {
         mazeNode *candidate = mazeCosts->get(k);
-        if ((candidate->stopCriteria > maxCriteria) && (candidate->stopCriteria <= LEN_PATH_STRAT))
+        if (myState == ESCAPE_BOUND)
         {
-            maxCriteria = candidate->stopCriteria;
-            bestTarget = k;
-            minCost = candidate->cost;
-        }
-        else if ((candidate->stopCriteria == maxCriteria) && (candidate->cost <= minCost))
-        {
-            if ((candidate->cost == minCost) && (distance(SimpleCoord{candidate->square->i, candidate->square->j}, current_pos) < bestDist))
+            maxCriteria = 1;
+            if (!isBoundarie(mazeCosts->get(k)->square->i, mazeCosts->get(k)->square->j, deleted) && (mazeCosts->get(k)->cost <= minCost))
             {
-                bestDist = distance(SimpleCoord{candidate->square->i, candidate->square->j}, current_pos);
                 bestTarget = k;
+                minCost = mazeCosts->get(k)->cost;
+                gladiator->log("Get out boundarie for %d:%d,%d", k, geti(k), getj(k));
             }
-            else
+        }
+        else
+        {
+            if ((candidate->stopCriteria > maxCriteria) && (candidate->stopCriteria <= LEN_PATH_STRAT))
             {
-                minCost = candidate->cost;
+                maxCriteria = candidate->stopCriteria;
                 bestTarget = k;
+                minCost = candidate->cost;
+            }
+            else if ((candidate->stopCriteria == maxCriteria) && (candidate->cost <= minCost))
+            {
+                if ((candidate->cost == minCost) && (distance(SimpleCoord{candidate->square->i, candidate->square->j}, current_pos) < bestDist))
+                {
+                    bestDist = distance(SimpleCoord{candidate->square->i, candidate->square->j}, current_pos);
+                    bestTarget = k;
+                }
+                else
+                {
+                    minCost = candidate->cost;
+                    bestTarget = k;
+                }
             }
         }
     }
@@ -125,9 +156,12 @@ void reset()
     float size = gladiator->maze->getSquareSize();
     gladiator->log("Square size = %f/%f", gladiator->maze->getSquareSize(), size);
     reset_motors(current_square, size, gladiator);
-
+    myState = DEFAULT_STATE;
     getDirStack();
     dateOfLastShrink = millis();
+    dateLastMove = millis();
+
+    lastPosition = gladiator->robot->getData().position;
 
     rocketMonitoring = new RocketMonitoring();
 
@@ -138,17 +172,33 @@ void lookWatch()
 {
     if ((myState != ESCAPE_BOUND) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
     {
-        myState = ESCAPE_BOUND;
-        gladiator->log("Mode ESCAPE_BOUND");
-        getDirStack();
+        // myState = ESCAPE_BOUND;
+        // gladiator->log("Mode ESCAPE_BOUND");
+        // getDirStack();
+    }
+    if ((myState != CRITICAL_RECOVERY) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND_CRITICAL))
+    {
+        wayToGo.goToMaze(gladiator, deleted);
+        myState = CRITICAL_RECOVERY_WAIT;
+        gladiator->log("Mode CRITICAL_RECOVERY");
     }
     if (millis() - dateOfLastShrink > TIME_SKRINK)
     {
         deleted++;
         dateOfLastShrink = millis();
         myState = EAT_AS_POSSIBLE;
-        // getDirStack();
+        getDirStack();
         gladiator->log("Mode EAT_AS_POSSIBLE");
+    }
+    if ((millis() - dateLastMove > TIME_NO_ACTION_ERROR) && false)
+    {
+        gladiator->log("Error - no move !");
+        const MazeSquare *current_square = gladiator->maze->getNearestSquare();
+        arr[0] = SimpleCoord{current_square->i, current_square->j};
+        arr[1] = SimpleCoord{I_RECOVERY, J_RECOVERY};
+        wayToGo.pushArr(arr, 2);
+        wayToGo.simplify();
+        dateLastMove = millis();
     }
 }
 
@@ -160,6 +210,7 @@ void setup()
     gladiator->game->onReset(&reset); // GFA 4.4.1
 }
 unsigned char robot_id_to_fire = 0;
+
 void loop()
 {
     if (gladiator->game->isStarted())
@@ -170,8 +221,12 @@ void loop()
         rocketMonitoring->monitoring_loop(gladiator);
         rocketMonitoring->print_info(gladiator);
 
-        if (wayToGo.hasFinish() || wayToGo.currentShorted_idx > 8)
+        if (wayToGo.hasFinish() || wayToGo.currentShorted_idx > 9)
         {
+            if (myState == CRITICAL_RECOVERY_WAIT)
+            {
+                myState = DEFAULT_STATE;
+            }
             wayToGo.currentShorted_idx = 0;
             gladiator->log("Finish path, starting new one from %d,%d", geti(genId(gladiator->maze->getNearestSquare())), getj(genId(gladiator->maze->getNearestSquare())));
             getDirStack();
@@ -185,6 +240,16 @@ void loop()
         {
             motor_handleMvt(&wayToGo, gladiator, deleted, false, 0);
         }
+
+        if (distance(lastPosition, gladiator->robot->getData().position) < DIST_NO_MOVE) // || isBoundarie(gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j, deleted + 1))
+        {
+        }
+        else
+        {
+            dateLastMove = millis();
+            lastPosition = gladiator->robot->getData().position;
+        }
+
         lookWatch();
         delay(10);
     }

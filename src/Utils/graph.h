@@ -13,7 +13,9 @@ enum States
     EAT_AS_POSSIBLE,
     ESCAPE_BOUND,
     ATTACK,
-    DEFENSE
+    DEFENSE,
+    CRITICAL_RECOVERY,
+    CRITICAL_RECOVERY_WAIT
 };
 
 struct SimpleCoord
@@ -79,7 +81,31 @@ public:
         }
         length = lenArr;
     }
+    void pushSingleCoord(SimpleCoord c1, SimpleCoord c2)
+    {
+        coordsShorted[0] = c1;
+        coordsShorted[1] = c2;
+        currentShorted_idx = 0;
+        length = 2;
+    }
+    void goToMaze(Gladiator *glad, int deleted)
+    {
 
+        int xtarget = glad->maze->getNearestSquare()->i;
+        int ytarget = glad->maze->getNearestSquare()->j;
+
+        if (xtarget < deleted + 1)
+            xtarget = deleted + 1;
+        if (xtarget > NB_ROW - deleted - 2)
+            xtarget = NB_ROW - deleted - 2;
+
+        if (ytarget < deleted + 1)
+            ytarget = deleted + 1;
+        if (ytarget > NB_ROW - deleted - 2)
+            ytarget = NB_ROW - deleted - 2;
+
+        pushSingleCoord(SimpleCoord{glad->maze->getNearestSquare()->i, glad->maze->getNearestSquare()->j}, SimpleCoord{xtarget, ytarget});
+    }
     bool hasFinish()
     {
         return (lengthShorted == 0) || (currentShorted_idx >= lengthShorted);
@@ -90,7 +116,7 @@ struct mazeNode
 {
     // mazeNode *parent = nullptr;
     int parent = 1;
-    int cost = 0;
+    float cost = 0;
     int stopCriteria = 0;
     int id = -1;
     bool haveParent = false;
@@ -105,7 +131,11 @@ public:
     int last_idx = 0;
     void push(mazeNode node)
     {
-        elements[last_idx] = node;
+        elements[last_idx].id = node.id;
+        elements[last_idx].square = node.square;
+        elements[last_idx].parent = node.parent;
+        elements[last_idx].cost = node.cost;
+        elements[last_idx].stopCriteria = node.stopCriteria;
         last_idx++;
     }
     mazeNode pop()
@@ -178,6 +208,8 @@ public:
     }
 };
 
+const SimpleCoord CENTER_POINT = SimpleCoord{5, 5};
+
 float distance(SimpleCoord A, SimpleCoord B);
 bool isBoundarie(mazeNode node, int deleted = 0);
 int genId(int i, int j);
@@ -188,7 +220,7 @@ bool isBoundarie(int i, int j, int deleted);
 bool isBoundarie(mazeNode node, int deleted);
 void getNeighborS(mazeNode *workingNode_, Gladiator *glad);
 mazeNode extractMinCost(listMazeNode *frontier, Gladiator *glad);
-int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States state);
+float cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States state);
 hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted, States state = DEFAULT_STATE);
 void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);
 int genPath(SimpleCoord *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);
