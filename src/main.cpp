@@ -3,15 +3,18 @@
 // #include "Utils/graph.h"
 #include "Utils/motors.h"
 
-#define TIME_SKRINK 15000
-#define LEN_PATH_STRAT 1
+#define TIME_SKRINK 20000
+#define TIME_ESCAPE_BOUND 15000
+#define LEN_PATH_STRAT 2
 
 Gladiator *gladiator;
 
 unsigned long timer = 0;
+unsigned long dateOfLastShrink = 0;
 int length = 2;
 int count = length - 1;
 int deleted = 0;
+States myState = DEFAULT_STATE;
 SimpleCoord arr[80]; //= {Coor{0, 2}, Coor{3, 3}};
 
 // Gladiator* gladiator;
@@ -21,7 +24,7 @@ void getDirStack()
 
     const MazeSquare *current_square = gladiator->maze->getNearestSquare();
     gladiator->log("Get New Strategy ================");
-    hashMazeNode *mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted); // assure que l'on est en dessous du critère
+    hashMazeNode *mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted, myState); // assure que l'on est en dessous du critère
 
     // on cherche le meilleur candidat qui minimise le cout et respecte la target
     int bestTarget = genId(current_square);
@@ -71,19 +74,24 @@ void reset()
     reset_motors(current_square, size, gladiator);
 
     getDirStack();
-    timer = millis();
+    dateOfLastShrink = millis();
 
     gladiator->log("ResetDone");
 }
 
 void lookWatch()
 {
-    // deleted++;
-    if ((deleted < 5) && (millis() > timer))
+    if ((myState != ESCAPE_BOUND) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
+    {
+        myState = ESCAPE_BOUND;
+        gladiator->log("Mode ESCAPE_BOUND");
+    }
+    if (millis() - dateOfLastShrink > TIME_SKRINK)
     {
         deleted++;
-        timer = millis() + TIME_SKRINK;
-        gladiator->log("ARENA SCRINK");
+        dateOfLastShrink = millis();
+        myState = EAT_AS_POSSIBLE;
+        gladiator->log("Mode EAT_AS_POSSIBLE");
     }
 }
 

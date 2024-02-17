@@ -5,14 +5,25 @@
 #define MAZE_NUMBER_CELLS NB_ROW *NB_ROW
 #define MAX_COST 10000
 
-struct SimpleCoord{
+#define DEFAULT_STATE EAT_AS_POSSIBLE
+
+enum States
+{
+    EAT_AS_POSSIBLE,
+    ESCAPE_BOUND,
+    ATTACK,
+    DEFENSE
+};
+
+struct SimpleCoord
+{
     int i;
     int j;
 };
 
 struct mazeNode
 {
-    //mazeNode *parent = nullptr;
+    // mazeNode *parent = nullptr;
     int parent = 1;
     int cost = 0;
     int stopCriteria = 0;
@@ -100,7 +111,6 @@ public:
     }
 };
 
-
 bool isBoundarie(mazeNode node, int deleted = 0);
 int genId(int i, int j);
 int geti(int id);
@@ -110,7 +120,7 @@ bool isBoundarie(int i, int j, int deleted);
 bool isBoundarie(mazeNode node, int deleted);
 void getNeighborS(mazeNode *workingNode_, Gladiator *glad);
 mazeNode extractMinCost(listMazeNode *frontier, Gladiator *glad);
-int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad);
-hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted);
+int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States state);
+hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted, States state = DEFAULT_STATE);
 void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);
 int genPath(SimpleCoord *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);

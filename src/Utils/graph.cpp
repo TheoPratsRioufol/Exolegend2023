@@ -80,9 +80,14 @@ bool isBoundarie(mazeNode node, int deleted)
     return isBoundarie(node.square->i, node.square->j, deleted);
 }
 
-int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad)
+int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States state)
 {
     return 1 + 10 * isBoundarie(nodeB, deleted) + 3 * (nodeB.square->possession == glad->robot->getData().teamId);
+}
+
+int getAvancement(mazeNode nextNode, int deleted, States state)
+{
+    return nextNode.square->coin.value == 1;
 }
 
 int genId(const MazeSquare *start_)
@@ -105,7 +110,7 @@ int getj(int id)
     return id % NB_ROW;
 }
 
-hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted)
+hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted, States state)
 {
     mazeNode start;
     start.square = (MazeSquare *)start_;
@@ -149,8 +154,9 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, i
         {
             // glad->log("read neigborg %d of id = %d of %d", i, neighbors.get(i)->id, &neighbors.elements[i]);
             nextNode = *neighbors.get(i);
-            int avancement = nextNode.square->possession != glad->robot->getData().teamId;
-            int newStopCriteria = GlobalCost.get(nextNode.id)->stopCriteria + avancement;
+            // int avancement = nextNode.square->possession != glad->robot->getData().teamId;
+            // getAvancement(nextNode) int avancement = nextNode.square->coin.value == 1;
+            int newStopCriteria = GlobalCost.get(nextNode.id)->stopCriteria + getAvancement(nextNode, deleted, state);
 
             /*if (avancement == 1)
             {
@@ -166,7 +172,7 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, i
                     frontier.push(nextNode);
                 }
             }
-            int newCost = GlobalCost.get(workingNode.id)->cost + cost(workingNode, nextNode, deleted, glad);
+            int newCost = GlobalCost.get(workingNode.id)->cost + cost(workingNode, nextNode, deleted, glad, state);
 
             if (!GlobalCost.has(nextNode) || GlobalCost.get(nextNode.id)->cost > newCost)
             {
