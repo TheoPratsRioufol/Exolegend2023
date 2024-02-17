@@ -4,7 +4,7 @@
 #include "Utils/motors.h"
 
 #define TIME_SKRINK 15000
-#define LEN_PATH_STRAT 3
+#define LEN_PATH_STRAT 5
 
 Gladiator* gladiator;
 
@@ -85,19 +85,24 @@ void setup() {
     //enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
     gladiator->game->onReset(&reset); // GFA 4.4.1
 }
-
+unsigned char robot_id_to_fire = 0;
 void loop() {
     if(gladiator->game->isStarted()) { //tester si un match à déjà commencer
         //code de votre stratégie   
-        count = motor_handleMvt(arr, count, length, gladiator, deleted);
+        
+        if(gladiator->weapon->canLaunchRocket()){
+            robot_id_to_fire = closestRobotEnemy(gladiator);
+            count = motor_handleMvt(arr, count, length, gladiator, deleted, true, robot_id_to_fire);
+        }else{
+            count = motor_handleMvt(arr, count, length, gladiator, deleted, false, 0);
+        }
         lookWatch();
 
         if (count == -1) {
             gladiator->log("Finish path, starting new one");
             getDirStack();
         }
-
-        delay(500);
     }
+    // delay(40);
 }
 
