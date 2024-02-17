@@ -1,10 +1,10 @@
 #include "Utils/motors.h"
 
-float kw = 5.0f;
-float kv = 1.8f;
-float wlimit = 5.f;
-float vlimitMax = .3f;
-float vlimitMin = .1f;
+float kw = 8.0f;
+float kv = 1.2f;
+float wlimit = 7.f;
+float vlimitMax = .6f;
+float vlimitMin = .3f;
 float erreurPos = 0.01;
 float erreurPos_angle = 5 * DEG_TO_RAD;
 float dRampe = 0.5;
@@ -92,7 +92,21 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
         double rho = atan2(dy, dx);
         double consw = kw * reductionAngle(rho - pos.a);
 
-        double consv = kv * d * cos(reductionAngle(rho - pos.a));
+        float vlimit = vlimitMax;
+
+        if (d < dRampe)
+        {
+            if (d * penteRampe > vlimitMin)
+            {
+                vlimit = d * penteRampe;
+            }
+            else
+            {
+                vlimit = vlimitMin;
+            }
+        }
+
+        double consv = kv * d * pow(cos(reductionAngle(rho - pos.a)), 15);
         consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
         consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
 
