@@ -1,21 +1,24 @@
+
 #include "gladiator.h"
 
 #define NB_ROW 12
 #define MAZE_NUMBER_CELLS NB_ROW *NB_ROW
 #define MAX_COST 10000
 
+struct SimpleCoord{
+    int i;
+    int j;
+};
+
 struct mazeNode
 {
     //mazeNode *parent = nullptr;
     int parent = 1;
     int cost = 0;
+    int stopCriteria = 0;
     int id = -1;
     bool haveParent = false;
     MazeSquare *square;
-};
-
-struct Coor{
-    int i, j;
 };
 
 class listMazeNode
@@ -69,6 +72,7 @@ public:
         for (int i = 0; i < MAZE_NUMBER_CELLS; i++)
         {
             elements[i].id = -1;
+            elements[i].stopCriteria = 0;
         }
     }
     void add(mazeNode node)
@@ -78,12 +82,13 @@ public:
         elements[node.id].parent = node.parent;
         elements[node.id].cost = node.cost;
     }
-    void add2(int id, mazeNode parent, int cost, MazeSquare *square)
+    void add2(int id, mazeNode parent, int cost, MazeSquare *square, int stopCriteria_)
     {
         elements[id].id = id;
         elements[id].square = square;
         elements[id].parent = parent.id;
         elements[id].cost = cost;
+        elements[id].stopCriteria = stopCriteria_;
     }
     mazeNode *get(int id)
     {
@@ -95,13 +100,15 @@ public:
     }
 };
 
+
+bool isBoundarie(mazeNode node, int deleted = 0);
 int genId(int i, int j);
 int geti(int id);
 int getj(int id);
 int genId(const MazeSquare *start_);
 void getNeighborS(mazeNode *workingNode_, Gladiator *glad);
 mazeNode extractMinCost(listMazeNode *frontier, Gladiator *glad);
-int cost(mazeNode nodeA, mazeNode nodeB);
-hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad);
+int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad);
+hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted);
 void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);
-int genPath(Coor *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);
+int genPath(SimpleCoord *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);

@@ -1,15 +1,12 @@
+
+#ifndef GLADIATOR
 #include "gladiator.h"
+#endif
 
-float kw = 1.2;
-float kv = 1.f;
-float wlimit = 3.f;
-float vlimit = 0.3f;
-float erreurPos = 0.07;
+#include "Utils/graph.h"
 
-float squareSize;
 
-bool visited[12][12] = {};
-Position goal {0.14f, 1.615f, 0.f};
+#define THRESHOLD 0.1
 
 enum SquareEdge{
     NORTH,    SOUTH,
@@ -17,14 +14,11 @@ enum SquareEdge{
     CENTER
 };
 
-struct Coord{
-    int i;
-    int j;
-};
 
-
-void reset();
-Position getSquareCoor(const MazeSquare *square, SquareEdge edge = CENTER);
+void reset_motors(const MazeSquare *firstSquare, float squareSize_, Gladiator *gladiator);
+Position getSquareCoor(const MazeSquare *square, SquareEdge edge  = CENTER);
 double reductionAngle(double x);
-void go_to(Position cons, Position pos);
+void go_to(Position cons, Position pos, Gladiator *gladiator);
 bool checksquare(const MazeSquare *square);
+int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator);
+float distance(const Position &p1, const Position &p2);

@@ -1,49 +1,83 @@
 //#include "gladiator.h"
 
-Gladiator* gladiator;
-
-#include "Utils/traj.h"
+//#include "Utils/graph.h"
 #include "Utils/motors.h"
 
-#define THRESHOLD 0.1
+#define TIME_SKRINK 15000
+#define LEN_PATH_STRAT 10
 
+Gladiator* gladiator;
 
+unsigned long timer = 0;
 int length = 2;
 int count = length-1;
-Coor arr[80]; //= {Coor{0, 2}, Coor{3, 3}};
+int deleted = 0;
+SimpleCoord arr[80]; //= {Coor{0, 2}, Coor{3, 3}};
 
 //Gladiator* gladiator;
 
 
+void getDirStack() {
+
+    const MazeSquare *current_square = gladiator->maze->getNearestSquare();
+    gladiator->log("Get New Strategy");
+    hashMazeNode* mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted); // assure que l'on est en dessous du critère
+
+    // on cherche le meilleur candidat qui minimise le cout et respecte la target
+    int bestTarget = genId(current_square);
+    int minCost = mazeCosts->get(bestTarget)->cost;
+    int maxCriteria = 0;
+    for (int k = 0; k < MAZE_NUMBER_CELLS; k++) {
+        mazeNode *candidate = mazeCosts->get(k);
+        if (candidate->stopCriteria > maxCriteria) {
+            maxCriteria = candidate->stopCriteria;
+            bestTarget = k;
+            minCost = candidate->cost;
+        } else if ((candidate->stopCriteria == maxCriteria) && (candidate->cost < minCost)) {
+            minCost = candidate->cost;
+            bestTarget = k;
+        }
+    }
+
+    // on génère le path correspondant
+    mazeNode A;
+    A.id = genId(current_square);
+    mazeNode B;
+    B.id = bestTarget;
+
+    length = genPath(arr, mazeCosts, A, B,gladiator);
+    count = length-1;
+
+    gladiator->log("Choosen Path, stopCriteria = %d",maxCriteria);
+    for (int k = 0; k < length; k++) {
+         gladiator->log("CP %d = %d,%d",k,arr[k].i,arr[k].j);
+    }
+}
+
 
 void reset() {
     //fonction de reset:
-    //initialisation de toutes vos variables avant le début d'un match
-    squareSize = gladiator->maze->getSquareSize(); //largeur d'une case GFA 4.7.4
     const MazeSquare *current_square = gladiator->maze->getNearestSquare();
-        // const MazeSquare *target = gladiator->maze->getSquare(0, 0);
-        // gladiator->log("Shortest path squa");
-        gladiator->log("Start dij");
+    float size = gladiator->maze->getSquareSize();
+    gladiator->log("Square size = %f/%f",gladiator->maze->getSquareSize(), size);
+    reset_motors(current_square, size, gladiator);
 
-        hashMazeNode* mazeCosts = solve(current_square, gladiator);
+    getDirStack();
+    timer = millis();
 
-        int itarget = random(0,12);
-        int jtarget = random(0,12);
-
-        mazeNode A;
-        A.id = genId(current_square);
-        mazeNode B;
-        B.id = genId(itarget, jtarget);
-        gladiator->log("Start Path");
-        length = genPath(arr, mazeCosts, A, B,gladiator);
-
-        gladiator->log("Disp Path");
-        for (int k = 0; k < length; k++) {
-            gladiator->log("CP %d = %d,%d",k,arr[k].i,arr[k].j);
-        }
-        goal = getSquareCoor(gladiator->maze->getSquare(arr[length-1].i, arr[length-1].j));
-        count = length-1;
+    gladiator->log("ResetDone");
 }
+
+
+void lookWatch() {
+   // deleted++;
+   if ((deleted < 5) && (millis() > timer)) {
+        deleted++;
+        timer = millis() + TIME_SKRINK;
+        gladiator->log("ARENA SCRINK");
+   }
+}
+
 
 void setup() {
     //instanciation de l'objet gladiator
@@ -52,23 +86,17 @@ void setup() {
     gladiator->game->onReset(&reset); // GFA 4.4.1
 }
 
-float distance(const Position &p1, const Position &p2) {
-    return sqrt(pow((p1.x - p2.x), 2) + pow((p1.y - p2.y), 2));
-}
-
-Position current;
-const MazeSquare *nearest_square;
-
 void loop() {
     if(gladiator->game->isStarted()) { //tester si un match à déjà commencer
         //code de votre stratégie   
-        current = gladiator->robot->getData().position;
-        go_to(goal, current);
-        if (distance(current, goal) <= THRESHOLD && count >= 0) {
-            goal = getSquareCoor(gladiator->maze->getSquare(arr[count].i, arr[count].j));
-            gladiator->log("Step %d l%d, Moving to %d,%d",count, length, arr[count].i, arr[count].j);
-            count--;
+        count = motor_handleMvt(arr, count, length, gladiator);
+        lookWatch();
+
+        if (count == -1) {
+            gladiator->log("Finish path, starting new one");
+            getDirStack();
         }
+
         delay(500);
     }
 }

@@ -13,6 +13,9 @@
         "tuple": "cpp",
         "utility": "cpp",
         "variant": "cpp",
-        "*.cpptg": "cpp"
+        "*.cpptg": "cpp",
+        "numbers": "cpp",
+        "algorithm": "cpp",
+        "string_view": "cpp"
     }
 }

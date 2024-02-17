@@ -2,7 +2,7 @@
 #include "gladiator.h"
 #endif
 
-#include "Utils/traj.h"
+#include "Utils/graph.h"
 
 listMazeNode neighbors;
 hashMazeNode GlobalCost;
@@ -64,9 +64,19 @@ mazeNode extractMinCost(listMazeNode *frontier, Gladiator *glad)
     // glad->log("extractMinCost 2");
 }
 
-int cost(mazeNode nodeA, mazeNode nodeB)
+bool isBoundarie(mazeNode node, int deleted) {
+    if ((node.square->i <= deleted) || (node.square->i >= NB_ROW - deleted - 1)) {
+        return true;
+    }
+    if ((node.square->j <= deleted) || (node.square->j >= NB_ROW - deleted - 1)) {
+        return true;
+    }
+    return false;
+}
+
+int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad)
 {
-    return 1;
+    return 1 + 4*isBoundarie(nodeB, deleted) + 3*(nodeB.square->possession == glad->robot->getData().teamId);
 }
 
 int genId(const MazeSquare *start_)
@@ -87,7 +97,7 @@ int getj(int id) {
     return id%NB_ROW;
 }
 
-hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad)
+hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted)
 {
     mazeNode start;
     start.square = (MazeSquare*) start_;
@@ -119,7 +129,11 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad)
         getNeighborS(&workingNode, glad);
        // glad->log("COST OF WORK SOL = %d",workingNode.cost);
         //neighbors->print(glad);
-       // glad->log("l = %d", frontier.len());
+       //glad->log("stopCriteria = %d", workingNode.stopCriteria);
+       if (workingNode.stopCriteria >= pathLength){
+        //glad->log("Skip arrete = %d", frontier.len());
+        continue;
+       }  
 
        // glad->log("nb of neibourgs = %d", neighbors.len());
 
@@ -128,16 +142,19 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad)
            // glad->log("read neigborg %d of id = %d of %d", i, neighbors.get(i)->id, &neighbors.elements[i]);
             nextNode = *neighbors.get(i);
            // glad->log("next node = %d",nextNode.id);
+            int newStopCriteria = GlobalCost.get(workingNode.id)->stopCriteria + 1;
             if (!GlobalCost.has(nextNode))
             {
                 //glad->log("add node = %d",nextNode.id);
+                nextNode.stopCriteria = newStopCriteria;
                 frontier.push(nextNode);
             }
-            int newCost = GlobalCost.get(workingNode.id)->cost + cost(workingNode, nextNode);
+            int newCost = GlobalCost.get(workingNode.id)->cost + cost(workingNode, nextNode, deleted, glad);
+            
             if (!GlobalCost.has(nextNode) || GlobalCost.get(nextNode.id)->cost > newCost)
             {
                // glad->log("COST BEFORE ADD has = %d with %d",costs->has(nextNode),costs->elements[nextNode.id].id);
-                GlobalCost.add2(nextNode.id, workingNode, newCost, nextNode.square);
+                GlobalCost.add2(nextNode.id, workingNode, newCost, nextNode.square, newStopCriteria);
                // glad->log("COST ADD has = %d with %d",costs->has(nextNode),costs->elements[nextNode.id].id);
                 //glad->log("this %d parent %d, R parent %d",nextNode.id,workingNode.id,GlobalCost.get(nextNode.id)->parent);
             }
@@ -151,12 +168,12 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad)
 
 void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad) {
     mazeNode *prevNode = &B;
-    glad->log("Go to %d",B.id);
+    //glad->log("Go to %d",B.id);
     if (B.id == A.id)
     return;
     for (int i = 0; i < MAZE_NUMBER_CELLS; i++) {
         int nextid = costs->get(prevNode->id)->parent;
-        glad->log("Go %d, %d before ! (id=%d) %d",geti(nextid),getj(nextid),prevNode->id,nextid);
+        //glad->log("Go %d, %d before ! (id=%d) %d",geti(nextid),getj(nextid),prevNode->id,nextid);
         if (nextid == A.id) {
             break;
         }
@@ -164,12 +181,12 @@ void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad) {
     }
 }
 
-int genPath(Coor *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad) {
+int genPath(SimpleCoord *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad) {
     mazeNode *prevNode = &B;
     //pointMission[0] = Coor{geti(A.id),getj(A.id)};
     int length_ = 1;
     if (B.id == A.id) {
-        pointMission[0] = Coor{geti(A.id),getj(A.id)};
+        pointMission[0] = SimpleCoord{geti(A.id),getj(A.id)};
     return 0;
     }
     for (int i = 0; i < MAZE_NUMBER_CELLS; i++) {
@@ -179,9 +196,9 @@ int genPath(Coor *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gla
             break;
         }
         prevNode = costs->get(nextid);
-        pointMission[i] = Coor{geti(nextid),getj(nextid)};
+        pointMission[i] = SimpleCoord{geti(nextid),getj(nextid)};
         length_ ++;
     }
-    pointMission[length_-1] = Coor{geti(A.id),getj(A.id)};
+    pointMission[length_-1] = SimpleCoord{geti(A.id),getj(A.id)};
     return length_;
 }
