@@ -3,8 +3,10 @@
 float kw = 5.0f;
 float kv = 1.5f;
 float wlimit = 5.f;
-float vlimit = .6f;
+float vlimitMax = .6f;
+float vlimitMin = .1f;
 float erreurPos = 0.01;
+float dRampe = 0.5;
 
 float squareSize;
 
@@ -88,7 +90,12 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
         double rho = atan2(dy, dx);
         double consw = kw * reductionAngle(rho - pos.a);
 
-        // vlimit = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
+        if (d < dRampe) {
+            float vlimit = max;
+        } else {
+            float vlimit = vlimitMax;
+        }
+        
         double consv = kv * d * cos(reductionAngle(rho - pos.a));
         consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
         consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
