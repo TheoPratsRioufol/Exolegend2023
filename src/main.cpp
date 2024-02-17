@@ -4,7 +4,7 @@
 #include "Utils/motors.h"
 
 #define TIME_SKRINK 15000
-#define LEN_PATH_STRAT 10
+#define LEN_PATH_STRAT 3
 
 Gladiator* gladiator;
 
@@ -89,7 +89,7 @@ void setup() {
 void loop() {
     if(gladiator->game->isStarted()) { //tester si un match à déjà commencer
         //code de votre stratégie   
-        count = motor_handleMvt(arr, count, length, gladiator);
+        count = motor_handleMvt(arr, count, length, gladiator, deleted);
         lookWatch();
 
         if (count == -1) {

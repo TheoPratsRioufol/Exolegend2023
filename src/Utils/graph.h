@@ -106,6 +106,8 @@ int genId(int i, int j);
 int geti(int id);
 int getj(int id);
 int genId(const MazeSquare *start_);
+bool isBoundarie(int i, int j, int deleted);
+bool isBoundarie(mazeNode node, int deleted);
 void getNeighborS(mazeNode *workingNode_, Gladiator *glad);
 mazeNode extractMinCost(listMazeNode *frontier, Gladiator *glad);
 int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad);

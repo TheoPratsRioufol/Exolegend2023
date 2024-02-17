@@ -116,12 +116,16 @@ bool checksquare(const MazeSquare *square){
     return false;
 }
 
-int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator) {
+int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator, int deleted) {
         current = gladiator->robot->getData().position;
         go_to(goal, current, gladiator);
         //gladiator->log("Goal = %f,%f vs %d,%d",goal.x,goal.y,gladiator->maze->getNearestSquare()->i,gladiator->maze->getNearestSquare()->j);
         if (distance(current, goal) <= THRESHOLD && count >= 0) {
             goal = getSquareCoor(gladiator->maze->getSquare(listPos[count].i, listPos[count].j));
+            // si on va dans le mur on change de start
+            if (isBoundarie(listPos[count].i, listPos[count].j, deleted) && (length-count-1 > 1)) {
+                return -1;
+            }
             return count-1;
         }
         return count;

@@ -20,5 +20,5 @@ Position getSquareCoor(const MazeSquare *square, SquareEdge edge  = CENTER);
 double reductionAngle(double x);
 void go_to(Position cons, Position pos, Gladiator *gladiator);
 bool checksquare(const MazeSquare *square);
-int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator);
+int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator, int deleted);
 float distance(const Position &p1, const Position &p2);

@@ -64,14 +64,18 @@ mazeNode extractMinCost(listMazeNode *frontier, Gladiator *glad)
     // glad->log("extractMinCost 2");
 }
 
-bool isBoundarie(mazeNode node, int deleted) {
-    if ((node.square->i <= deleted) || (node.square->i >= NB_ROW - deleted - 1)) {
+bool isBoundarie(int i, int j, int deleted) {
+    if ((i <= deleted) || (i >= NB_ROW - deleted - 1)) {
         return true;
     }
-    if ((node.square->j <= deleted) || (node.square->j >= NB_ROW - deleted - 1)) {
+    if ((j <= deleted) || (j >= NB_ROW - deleted - 1)) {
         return true;
     }
     return false;
+}
+
+bool isBoundarie(mazeNode node, int deleted) {
+    return isBoundarie(node.square->i,node.square->j,deleted);
 }
 
 int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad)
@@ -142,7 +146,8 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, i
            // glad->log("read neigborg %d of id = %d of %d", i, neighbors.get(i)->id, &neighbors.elements[i]);
             nextNode = *neighbors.get(i);
            // glad->log("next node = %d",nextNode.id);
-            int newStopCriteria = GlobalCost.get(workingNode.id)->stopCriteria + 1;
+            int avancement = nextNode.square->possession != glad->robot->getData().teamId;
+            int newStopCriteria = GlobalCost.get(workingNode.id)->stopCriteria + avancement;
             if (!GlobalCost.has(nextNode))
             {
                 //glad->log("add node = %d",nextNode.id);
