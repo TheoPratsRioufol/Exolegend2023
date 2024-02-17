@@ -4,7 +4,7 @@
 #include "Utils/motors.h"
 
 #define TIME_SKRINK 15000
-#define LEN_PATH_STRAT 3
+#define LEN_PATH_STRAT 6
 
 Gladiator* gladiator;
 
@@ -13,8 +13,10 @@ int length = 2;
 int count = length-1;
 int deleted = 0;
 SimpleCoord arr[80]; //= {Coor{0, 2}, Coor{3, 3}};
+bool start = true;
 
 //Gladiator* gladiator;
+
 
 
 void getDirStack() {
@@ -84,9 +86,11 @@ void setup() {
     gladiator = new Gladiator();
     //enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
     gladiator->game->onReset(&reset); // GFA 4.4.1
+
 }
 
 void loop() {
+    if(start){start = false; getDirStack();}
     if(gladiator->game->isStarted()) { //tester si un match à déjà commencer
         //code de votre stratégie   
         count = motor_handleMvt(arr, count, length, gladiator, deleted);
@@ -97,7 +101,7 @@ void loop() {
             getDirStack();
         }
 
-        delay(500);
+        delay(10);
     }
 }
 

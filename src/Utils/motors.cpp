@@ -1,10 +1,10 @@
 #include "Utils/motors.h"
 
-float kw = 1.2;
-float kv = 1.f;
+float kw = 1.0f;
+float kv = 0.8f;
 float wlimit = 3.f;
 float vlimit = 0.3f;
-float erreurPos = 0.07;
+float erreurPos = 0.01;
 
 float squareSize;
 
@@ -91,6 +91,13 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
 
         consvl = consv - gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
         consvr = consv + gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
+
+
+        gladiator->log("angle diff = %f",reductionAngle(rho - pos.a));
+        if (reductionAngle(rho - pos.a)> PI/12){
+            consvl = -0.3 * reductionAngle(rho - pos.a)/PI;
+            consvr = 0.3 * reductionAngle(rho - pos.a)/PI;
+        }
     }
     else
     {
