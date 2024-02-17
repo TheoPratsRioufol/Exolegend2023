@@ -4,7 +4,7 @@
 #include "Utils/motors.h"
 
 #define TIME_SKRINK 15000
-#define LEN_PATH_STRAT 1
+#define LEN_PATH_STRAT 3
 
 Gladiator *gladiator;
 
@@ -13,6 +13,8 @@ int length = 2;
 int count = length - 1;
 int deleted = 0;
 SimpleCoord arr[80]; //= {Coor{0, 2}, Coor{3, 3}};
+SimpleCoord arrShorted[80]; //= {Coor{0, 2}, Coor{3, 3}};
+
 bool start = true;
 
 // Gladiator* gladiator;
@@ -61,6 +63,22 @@ void getDirStack()
 
     gladiator->log("Goal (trg=%d) cap=%d criteria=%d", bestTarget, (mazeCosts->get(bestTarget)->square->possession == gladiator->robot->getData().teamId), mazeCosts->get(bestTarget)->stopCriteria);
     gladiator->log("%d : cap=%d by maze", bestTarget, (gladiator->maze->getSquare(geti(bestTarget), getj(bestTarget))->possession == gladiator->robot->getData().teamId));
+
+    // Contracter l'array des coordonnées à parcourir en arrShorted :
+    arrShorted[0] = arr[length-1];
+    int count_short = 0;
+    for (int i = 1; i < length-1; i++)
+    {
+        if (!(((arr[length-2-i].i == arr[length-1-i].i) && (arr[length-1-i].i == arr[length-i].i)) || ((arr[length-2-i].j == arr[length-1-i].j) && (arr[length-1-i].j == arr[length-i].j)))){
+            count_short++;
+            arrShorted[count_short] = arr[length-1-i];
+            gladiator->log("add %d,%d at %d",arr[length-1-i].i,arr[length-1-i].j,i);
+        }
+    }
+    count_short++;
+    arrShorted[count_short] = arr[0];
+    length = count_short+1;
+    count = 0;
 }
 
 void reset()
@@ -101,7 +119,9 @@ void loop()
     if (gladiator->game->isStarted())
     { // tester si un match à déjà commencer
         // code de votre stratégie
-        count = motor_handleMvt(arr, count, length, gladiator, deleted);
+        
+        // arrShorted défini ??
+        count = motor_handleMvt(arrShorted, count, length, gladiator, deleted);
         lookWatch();
 
         if (count == -1)
