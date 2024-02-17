@@ -4,7 +4,7 @@
 #include "Utils/motors.h"
 
 #define TIME_SKRINK 15000
-#define LEN_PATH_STRAT 1
+#define LEN_PATH_STRAT 2
 
 Gladiator *gladiator;
 

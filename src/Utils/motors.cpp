@@ -155,7 +155,24 @@ bool checksquare(const MazeSquare *square)
 int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator, int deleted, bool fireRocket, unsigned char robot_id)
 {
     current = gladiator->robot->getData().position;
-    go_to(goal, current, gladiator);
+    if(fireRocket) {
+        Position pos_other = gladiator->game->getOtherRobotData(robot_id).position;
+        // log de la position de l'autre robot
+        // log de l'id
+        gladiator->log("ID de l'autre robot : %d", robot_id);
+        gladiator->log("Position de l'autre robot : %f, %f", pos_other.x, pos_other.y);
+        Position pos = gladiator->robot->getData().position;
+        double rho = atan2(pos_other.y - pos.y, pos_other.x - pos.x);
+        // log de rho
+        gladiator->log("Rho : %f", rho);
+        Position target = {pos.x, pos.y, rho};
+        go_to_angle(rho, pos.a, gladiator);
+        if (abs(reductionAngle(rho - pos.a)) < 1*DEG_TO_RAD) {
+            gladiator->weapon->launchRocket();
+        }
+    }else{
+        go_to(goal, current, gladiator);
+    }
     // gladiator->log("Goal=%f,%f cur=%d,%d c %d", goal.x, goal.y, gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j, count);
     if (distance(current, goal) <= THRESHOLD && count >= 0)
     {
