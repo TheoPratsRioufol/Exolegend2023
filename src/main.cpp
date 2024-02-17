@@ -112,32 +112,7 @@ void loop() {
             gladiator->log("Finish path, starting new one");
             getDirStack();
         }
-    }
-    // delay(40);
-}
-
-void setup()
-{
-    // instanciation de l'objet gladiator
-    gladiator = new Gladiator();
-    // enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
-    gladiator->game->onReset(&reset); // GFA 4.4.1
-}
-
-void loop()
-{
-    if (gladiator->game->isStarted())
-    { // tester si un match à déjà commencer
-        // code de votre stratégie
-        count = motor_handleMvt(arr, count, length, gladiator, deleted);
-        lookWatch();
-
-        if (count == -1)
-        {
-            gladiator->log("Finish path, starting new one from %d,%d", geti(genId(gladiator->maze->getNearestSquare())), getj(genId(gladiator->maze->getNearestSquare())));
-            getDirStack();
-        }
-
         delay(10);
     }
+    // delay(40);
 }

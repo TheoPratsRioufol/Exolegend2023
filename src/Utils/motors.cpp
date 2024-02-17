@@ -5,7 +5,7 @@ float kv = 0.8f;
 float wlimit = 3.f;
 float vlimit = 0.3f;
 float erreurPos = 0.01;
-
+float erreurPos_angle = 5*DEG_TO_RAD;
 float squareSize;
 
 bool visited[12][12] = {};
@@ -152,7 +152,7 @@ bool checksquare(const MazeSquare *square)
     return false;
 }
 
-int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator, int deleted)
+int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator, int deleted, bool fireRocket, unsigned char robot_id)
 {
     current = gladiator->robot->getData().position;
     go_to(goal, current, gladiator);
