@@ -2,12 +2,17 @@
 
 // #include "Utils/graph.h"
 #include "Utils/motors.h"
+#include "Utils/RocketMonitoring.h"
 
 #define TIME_SKRINK 20000
 #define TIME_ESCAPE_BOUND 12000
 #define LEN_PATH_STRAT 3
 
+#define TIME_SKRINK 15000
+#define LEN_PATH_STRAT 2
+
 Gladiator *gladiator;
+RocketMonitoring *rocketMonitoring;
 
 unsigned long timer = 0;
 unsigned long dateOfLastShrink = 0;
@@ -110,6 +115,8 @@ void reset()
     getDirStack();
     dateOfLastShrink = millis();
 
+    rocketMonitoring = new RocketMonitoring();
+
     gladiator->log("ResetDone");
 }
 
@@ -138,25 +145,32 @@ void setup()
     // enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
     gladiator->game->onReset(&reset); // GFA 4.4.1
 }
-
+unsigned char robot_id_to_fire = 0;
 void loop()
 {
     if (gladiator->game->isStarted())
     { // tester si un match à déjà commencer
         // code de votre stratégie
 
-        // arrShorted défini ??
-        motor_handleMvt(&wayToGo, gladiator, deleted);
-        lookWatch();
-
-        // gladiator->log("res : idx=%d/l=%d", wayToGo.currentShorted_idx, wayToGo.lengthShorted);
+        // print info about RocketMonitoring
+        rocketMonitoring->monitoring_loop(gladiator);
+        rocketMonitoring->print_info(gladiator);
 
         if (wayToGo.hasFinish())
         {
             gladiator->log("Finish path, starting new one from %d,%d", geti(genId(gladiator->maze->getNearestSquare())), getj(genId(gladiator->maze->getNearestSquare())));
             getDirStack();
         }
-
+        if (gladiator->weapon->canLaunchRocket())
+        {
+            robot_id_to_fire = closestRobotEnemy(gladiator);
+            motor_handleMvt(&wayToGo, gladiator, deleted);
+        }
+        else
+        {
+            motor_handleMvt(&wayToGo, gladiator, deleted);
+        }
+        lookWatch();
         delay(10);
     }
 }
