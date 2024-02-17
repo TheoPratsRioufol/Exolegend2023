@@ -83,9 +83,9 @@ bool isBoundarie(mazeNode node, int deleted)
 int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States state)
 {
     if (state == EAT_AS_POSSIBLE)
-        return 5 + 5 * (nodeB.square->possession == glad->robot->getData().teamId) + 5 * (nodeB.square->coin.value != 1);
+        return 4 + 5 * (nodeB.square->possession == glad->robot->getData().teamId) + 5 * (nodeB.square->coin.value != 1);
     else
-        return 1;
+        return 6;
     // return 1 + 1 * (nodeB.square->possession == glad->robot->getData().teamId);
 }
 

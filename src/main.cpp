@@ -6,10 +6,7 @@
 
 #define TIME_SKRINK 20000
 #define TIME_ESCAPE_BOUND 12000
-#define LEN_PATH_STRAT 3
-
-#define TIME_SKRINK 15000
-#define LEN_PATH_STRAT 2
+#define LEN_PATH_STRAT 4
 
 Gladiator *gladiator;
 RocketMonitoring *rocketMonitoring;
@@ -164,11 +161,11 @@ void loop()
         if (gladiator->weapon->canLaunchRocket())
         {
             robot_id_to_fire = closestRobotEnemy(gladiator);
-            motor_handleMvt(&wayToGo, gladiator, deleted);
+            motor_handleMvt(&wayToGo, gladiator, deleted, true, robot_id_to_fire);
         }
         else
         {
-            motor_handleMvt(&wayToGo, gladiator, deleted);
+            motor_handleMvt(&wayToGo, gladiator, deleted, false, 0);
         }
         lookWatch();
         delay(10);

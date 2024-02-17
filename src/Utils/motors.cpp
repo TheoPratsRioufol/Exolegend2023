@@ -159,7 +159,7 @@ bool checksquare(const MazeSquare *square)
     return false;
 }
 
-int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *gladiator, int deleted, bool fireRocket, unsigned char robot_id) void motor_handleMvt(WayToGo *wayToGo, Gladiator *gladiator, int deleted)
+void motor_handleMvt(WayToGo *wayToGo, Gladiator *gladiator, int deleted, bool fireRocket, unsigned char robot_id)
 {
     current = gladiator->robot->getData().position;
     if (fireRocket)
@@ -185,7 +185,7 @@ int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *glad
         go_to(goal, current, gladiator);
     }
     // gladiator->log("Goal=%f,%f cur=%d,%d c %d", goal.x, goal.y, gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j, count);
-    if (distance(current, goal) <= THRESHOLD && count >= 0)
+    if ((distance(current, goal) <= THRESHOLD) && !wayToGo->hasFinish())
     {
         wayToGo->moveToNext();
         if (wayToGo->hasFinish())
@@ -193,7 +193,7 @@ int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *glad
             return;
         }
         // gladiator->log("Next Goal = %d,%d", listPos[count - 1].i, listPos[count - 1].j);
-        goal = getSquareCoor(gladiator->maze->getSquare(listPos[count - 1].i, listPos[count - 1].j));
+        // goal = getSquareCoor(gladiator->maze->getSquare(listPos[count - 1].i, listPos[count - 1].j));
         gladiator->log("Next Goal = %d,%d L%d,C%d", wayToGo->getNext().i, wayToGo->getNext().j, wayToGo->getLengthSorted(), wayToGo->currentShorted_idx);
         goal = getSquareCoor(gladiator->maze->getSquare(wayToGo->getNext().i, wayToGo->getNext().j));
         // si on va dans le mur on change de start
@@ -201,13 +201,12 @@ int motor_handleMvt(SimpleCoord *listPos, int count, int length, Gladiator *glad
         // {
         //     return -1;
         // }
-        return count - 1;
+        /*
         if (isBoundarie(wayToGo->getNext().i, wayToGo->getNext().j, deleted) && (false))
         {
             return;
-        }
+        }*/
     }
-    return count;
 }
 
 unsigned char closestRobotEnemy(Gladiator *gladiator)
