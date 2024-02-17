@@ -82,7 +82,7 @@ bool isBoundarie(mazeNode node, int deleted)
 
 int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad)
 {
-    return 1 + 10 * isBoundarie(nodeB, deleted) + 3 * (nodeB.square->possession == glad->robot->getData().teamId);
+    return 1 + 10 * isBoundarie(nodeB, deleted) + 1 * (nodeB.square->possession == glad->robot->getData().teamId);
 }
 
 int genId(const MazeSquare *start_)
