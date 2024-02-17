@@ -9,7 +9,7 @@
 
 #define TIME_SKRINK 20000
 #define TIME_ESCAPE_BOUND 15000
-#define TIME_NO_ACTION_ERROR 1000
+#define TIME_NO_ACTION_ERROR 2500
 #define TIME_ESCAPE_BOUND_CRITICAL 18000
 #define LEN_PATH_STRAT 1
 #define DIST_NO_MOVE 0.02f
@@ -172,11 +172,11 @@ void lookWatch()
 {
     if ((myState != ESCAPE_BOUND) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
     {
-        // myState = ESCAPE_BOUND;
-        // gladiator->log("Mode ESCAPE_BOUND");
-        // getDirStack();
+        myState = ESCAPE_BOUND;
+        gladiator->log("Mode ESCAPE_BOUND");
+        getDirStack();
     }
-    if ((myState != CRITICAL_RECOVERY) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND_CRITICAL))
+    if ((myState != CRITICAL_RECOVERY_WAIT) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND_CRITICAL) && (isBoundarie(gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j, deleted)))
     {
         wayToGo.goToMaze(gladiator, deleted);
         myState = CRITICAL_RECOVERY_WAIT;
@@ -190,14 +190,11 @@ void lookWatch()
         getDirStack();
         gladiator->log("Mode EAT_AS_POSSIBLE");
     }
-    if ((millis() - dateLastMove > TIME_NO_ACTION_ERROR) && false)
+    if ((millis() - dateLastMove > TIME_NO_ACTION_ERROR)) // || isBoundarie(wayToGo.getNext().i, wayToGo.getNext().j, deleted - 1))
     {
-        gladiator->log("Error - no move !");
-        const MazeSquare *current_square = gladiator->maze->getNearestSquare();
-        arr[0] = SimpleCoord{current_square->i, current_square->j};
-        arr[1] = SimpleCoord{I_RECOVERY, J_RECOVERY};
-        wayToGo.pushArr(arr, 2);
-        wayToGo.simplify();
+        wayToGo.goToMaze(gladiator, deleted);
+        myState = CRITICAL_RECOVERY_WAIT;
+        gladiator->log("Mode CRITICAL_RECOVERY bis");
         dateLastMove = millis();
     }
 }
@@ -231,7 +228,7 @@ void loop()
             gladiator->log("Finish path, starting new one from %d,%d", geti(genId(gladiator->maze->getNearestSquare())), getj(genId(gladiator->maze->getNearestSquare())));
             getDirStack();
         }
-        if (gladiator->weapon->canLaunchRocket() && false)
+        if (gladiator->weapon->canLaunchRocket())
         {
             robot_id_to_fire = closestRobotEnemy(gladiator);
             motor_handleMvt(&wayToGo, gladiator, deleted, true, robot_id_to_fire);
@@ -241,7 +238,8 @@ void loop()
             motor_handleMvt(&wayToGo, gladiator, deleted, false, 0);
         }
 
-        if (distance(lastPosition, gladiator->robot->getData().position) < DIST_NO_MOVE) // || isBoundarie(gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j, deleted + 1))
+        if (distance(lastPosition, gladiator->robot->getData().position) < DIST_NO_MOVE)
+        // if (isBoundarie(gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j, deleted - 2))
         {
         }
         else
