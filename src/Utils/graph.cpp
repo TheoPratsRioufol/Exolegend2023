@@ -7,6 +7,11 @@
 listMazeNode neighbors;
 hashMazeNode GlobalCost;
 
+float distance(SimpleCoord A, SimpleCoord B)
+{
+    return sqrt(pow(A.i - B.i, 2) + pow(A.j - B.j, 2));
+}
+
 void getNeighborS(mazeNode *workingNode_, Gladiator *glad)
 {
     // glad->log("nei 1");
@@ -83,7 +88,7 @@ bool isBoundarie(mazeNode node, int deleted)
 int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States state)
 {
     if (state == EAT_AS_POSSIBLE)
-        return 4 + 5 * (nodeB.square->possession == glad->robot->getData().teamId) + 5 * (nodeB.square->coin.value != 1);
+        return 5 + 20 * (nodeB.square->possession == glad->robot->getData().teamId) + 15 * (nodeB.square->coin.value != 1) - 6 * (isBoundarie(nodeB, deleted) && (nodeB.square->possession != glad->robot->getData().teamId));
     else
         return 6;
     // return 1 + 1 * (nodeB.square->possession == glad->robot->getData().teamId);
@@ -93,7 +98,7 @@ int getAvancement(mazeNode nextNode, int deleted, States state, Gladiator *glad)
 {
     if (state == ESCAPE_BOUND)
         return (!isBoundarie(nextNode, deleted));
-    return (nextNode.square->possession != glad->robot->getData().teamId);
+    return 1 * ((nextNode.square->possession != glad->robot->getData().teamId) || (nextNode.square->coin.value != 1)); //+ 1 * (isBoundarie(nextNode, deleted) && (nextNode.square->possession != glad->robot->getData().teamId));
 }
 
 int genId(const MazeSquare *start_)
@@ -173,7 +178,7 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, i
             {
                 // glad->log("add node = %d",nextNode.id);
                 nextNode.stopCriteria = newStopCriteria;
-                if ((nextNode.stopCriteria < pathLength) || true)
+                if ((nextNode.stopCriteria < pathLength) || false)
                 {
                     frontier.push(nextNode);
                 }

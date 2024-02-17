@@ -45,11 +45,11 @@ public:
         coordsShorted[0] = coordsInverted[length - 1];
         for (int i = 1; i < length - 1; i++)
         {
-            if (!(((coordsInverted[length - 2 - i].i == coordsInverted[length - 1 - i].i) && (coordsInverted[length - 1 - i].i == coordsInverted[length - i].i)) || ((coordsInverted[length - 2 - i].j == coordsInverted[length - 1 - i].j) && (coordsInverted[length - 1 - i].j == coordsInverted[length - i].j))))
-            {
-                count_short++;
-                coordsShorted[count_short] = coordsInverted[length - 1 - i];
-            }
+            // if (!(((coordsInverted[length - 2 - i].i == coordsInverted[length - 1 - i].i) && (coordsInverted[length - 1 - i].i == coordsInverted[length - i].i)) || ((coordsInverted[length - 2 - i].j == coordsInverted[length - 1 - i].j) && (coordsInverted[length - 1 - i].j == coordsInverted[length - i].j))))
+            // {
+            count_short++;
+            coordsShorted[count_short] = coordsInverted[length - 1 - i];
+            // }
         }
         count_short++;
         coordsShorted[count_short] = coordsInverted[0];
@@ -178,6 +178,7 @@ public:
     }
 };
 
+float distance(SimpleCoord A, SimpleCoord B);
 bool isBoundarie(mazeNode node, int deleted = 0);
 int genId(int i, int j);
 int geti(int id);

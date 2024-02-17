@@ -1,7 +1,7 @@
 #include "Utils/motors.h"
 
 float kw = 5.0f;
-float kv = 1.5f;
+float kv = 1.8f;
 float wlimit = 5.f;
 float vlimitMax = .3f;
 float vlimitMin = .1f;
