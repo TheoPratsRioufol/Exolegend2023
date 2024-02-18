@@ -27,7 +27,6 @@ Position lastPosition;
 States myState = DEFAULT_STATE;
 
 SimpleCoord arr[SIZE_MAX_WAY]; //= {Coor{0, 2}, Coor{3, 3}};
-// SimpleCoord arrShorted[80]; //= {Coor{0, 2}, Coor{3, 3}};
 
 WayToGo wayToGo;
 
@@ -38,21 +37,21 @@ unsigned char vulnerable_enemy = 0;
 bool aimed_at_me = false;
 // Gladiator* gladiator;
 
-void getDirStack()
+int computeWhatToDo(const MazeSquare *current_square, States state, int len_path = LEN_PATH_STRAT)
 {
+    // gladiator->log("log1");
 
-    const MazeSquare *current_square = gladiator->maze->getNearestSquare();
-    gladiator->log("Get New Strategy ================");
-    mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted, myState); // assure que l'on est en dessous du critère
-
-    if (myState == ESCAPE_BOUND)
-    {
-        gladiator->log("ESCAPE_BOUND mode");
-    }
-    else
-    {
-        gladiator->log("REGULAR mode");
-    }
+    // retourne dans array
+    mazeCosts = solve(current_square, gladiator, len_path, deleted, state); // assure que l'on est en dessous du critère
+                                                                                          /*
+                                                                                              if (myState == ESCAPE_BOUND)
+                                                                                              {
+                                                                                                  gladiator->log("ESCAPE_BOUND mode");
+                                                                                              }
+                                                                                              else
+                                                                                              {
+                                                                                                  gladiator->log("REGULAR mode");
+                                                                                              }*/
 
     // SimpleCoord current_pos{current_square->i, current_square->j};
     // on cherche le meilleur candidat qui minimise le cout et respecte la target
@@ -60,76 +59,105 @@ void getDirStack()
     float minCost = MAX_COST;
     int minCheminsNb = 1000;
     int maxCriteria = 0;
-    // float bestDist = MAZE_NUMBER_CELLS * 10;
-
-    /*if ((myState == ESCAPE_BOUND))
-    {
-        gladiator->log("target is CENTER");
-        for (int k = 0; k < MAZE_NUMBER_CELLS; k++)
-        {
-            mazeNode *candidate = mazeCosts->get(k);
-            if (!isBoundarie(mazeCosts->get(k)->square->i, mazeCosts->get(k)->square->j, deleted) && (candidate->cost < minCost))
-            {
-                gladiator->log("get better cost than %d", minCost);
-                bestTarget = k;
-                minCost = candidate->cost;
-                // minCheminsNb = candidate->cheminsNb;
-            }
-        }
-    }
-    else
-    {*/
     if(myState==ATTACK){
         // go to the robot id vulnerable_enemy
         RobotData robot = gladiator->game->getOtherRobotData(vulnerable_enemy);
         bestTarget = genId(robot.position.x, robot.position.y);
     }
     else{
+        float bestDist = MAZE_NUMBER_CELLS * 10;
+        // gladiator->log("log2");
+
         for (int k = 0; k < MAZE_NUMBER_CELLS; k++)
         {
+            if (!mazeCosts->has(k))
+                continue;
             mazeNode *candidate = mazeCosts->get(k);
-            if ((candidate->stopCriteria > maxCriteria) && (candidate->stopCriteria <= LEN_PATH_STRAT))
+            if (myState == ESCAPE_BOUND)
             {
-                maxCriteria = candidate->stopCriteria;
-                bestTarget = k;
-                minCost = candidate->cost;
+                maxCriteria = 1;
+                if (!isBoundarie(mazeCosts->get(k)->square->i, mazeCosts->get(k)->square->j, deleted) && (mazeCosts->get(k)->cost <= minCost))
+                {
+                    bestTarget = k;
+                    minCost = mazeCosts->get(k)->cost;
+                    // gladiator->log("Get out boundarie for %d:%d,%d", k, geti(k), getj(k));
+                }
             }
-            else if ((candidate->stopCriteria == maxCriteria) && (candidate->cost < minCost))
+            else
             {
-                minCost = candidate->cost;
-                bestTarget = k;
+                mazeNode *candidate = mazeCosts->get(k);
+                if ((candidate->stopCriteria > maxCriteria) && (candidate->stopCriteria <= LEN_PATH_STRAT))
+                {
+                    maxCriteria = candidate->stopCriteria;
+                    bestTarget = k;
+                    minCost = candidate->cost;
+                }
+                else if ((candidate->stopCriteria == maxCriteria) && (candidate->cost < minCost))
+                {
+                    minCost = candidate->cost;
+                    bestTarget = k;
+                }
             }
         }
     }
-    //}
-
-    // on génère le path correspondant
+    // gladiator->log("log3");
+    if (maxCriteria == 0)
+    {
+        // wayToGo.pushArr(arr, 1);
+        // wayToGo.simplify();
+        return 1;
+    }
+    // gladiator->log("log4");
+    //  on génère le path correspondant
     mazeNode A;
     A.id = genId(current_square);
+    // gladiator->log("log5");
     mazeNode B;
     B.id = bestTarget;
-
     int length = genPath(arr, mazeCosts, A, B, gladiator);
 
-    gladiator->log("Choosen Path, stopCriteria = %d Min chemin%d", maxCriteria, minCheminsNb);
-    for (int k = 0; k < length; k++)
+    if (length == -1)
     {
-        gladiator->log("CP %d(%d) = %d,%d", k, genId(arr[k].i, arr[k].j), arr[k].i, arr[k].j);
+        // overflow error
+        return -1;
     }
 
+    // gladiator->log("log6");
+    // gladiator->log("Choosen Path, stopCriteria = %d Min chemin%d", maxCriteria, minCheminsNb);
+    for (int k = 0; k < length; k++)
+    {
+        // gladiator->log("CP %d(%d) = %d,%d", k, genId(arr[k].i, arr[k].j), arr[k].i, arr[k].j);
+    }
+    // gladiator->log("log7");
     if (length > 40)
     {
         B.id = B.id - 1;
         length = genPath(arr, mazeCosts, A, B, gladiator);
     }
+    // gladiator->log("log8");
+    // gladiator->log("Goal (trg=%d) cap=%d criteria=%d", bestTarget, (mazeCosts->get(bestTarget)->square->possession == gladiator->robot->getData().teamId), mazeCosts->get(bestTarget)->stopCriteria);
+    // gladiator->log("%d : cap=%d by maze", bestTarget, (gladiator->maze->getSquare(geti(bestTarget), getj(bestTarget))->possession == gladiator->robot->getData().teamId));
+    return length;
+}
 
-    gladiator->log("Goal (trg=%d) cap=%d criteria=%d", bestTarget, (mazeCosts->get(bestTarget)->square->possession == gladiator->robot->getData().teamId), mazeCosts->get(bestTarget)->stopCriteria);
-    gladiator->log("%d : cap=%d by maze", bestTarget, (gladiator->maze->getSquare(geti(bestTarget), getj(bestTarget))->possession == gladiator->robot->getData().teamId));
-
-    wayToGo.pushArr(arr, length);
-
-    // Contracter l'array des coordonnées à parcourir en arrShorted :
-    wayToGo.simplify();
+void getDirStack()
+{
+    gladiator->log("Get New Strategy ================");
+    int lengthArr = computeWhatToDo(gladiator->maze->getNearestSquare(), myState);
+    // gladiator->log("log9");
+    if (lengthArr > 0)
+    {
+        wayToGo.pushArr(arr, lengthArr);
+        // Contracter l'array des coordonnées à parcourir en arrShorted :
+        wayToGo.simplify(gladiator);
+        // gladiator->log("log11");
+    }
+    else
+    {
+        // const MazeSquare *curr_pos = gladiator->maze->getNearestSquare();
+        // wayToGo.pushSingleCoord(SimpleCoord{curr_pos->i, curr_pos->j}, SimpleCoord{5, 5});
+        gladiator->log("CENTER ***********");
+    }
 }
 
 void reset()
@@ -155,7 +183,7 @@ void reset()
 
 void lookWatch()
 {
-    if ((myState != ESCAPE_BOUND) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
+    if (false && (myState != ESCAPE_BOUND) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
     {
         myState = ESCAPE_BOUND;
         gladiator->log("Mode ESCAPE_BOUND");
@@ -165,8 +193,7 @@ void lookWatch()
     {
         wayToGo.goToMaze(gladiator, deleted);
         myState = CRITICAL_RECOVERY_WAIT;
-        gladiator->log("Mode CRITICAL_RECOVERY");
-        return;
+        gladiator->log("Mode CRITICAL_RECOVERY bounds");
     }
     if (millis() - dateOfLastShrink > TIME_SKRINK)
     {
@@ -180,7 +207,7 @@ void lookWatch()
     {
         wayToGo.goToMaze(gladiator, deleted);
         myState = CRITICAL_RECOVERY_WAIT;
-        gladiator->log("Mode CRITICAL_RECOVERY bis");
+        gladiator->log("Mode CRITICAL_RECOVERY time");
         dateLastMove = millis();
         return;
     }
@@ -219,7 +246,7 @@ void loop()
         rocketMonitoring->monitoring_loop(gladiator);
         rocketMonitoring->print_info(gladiator);
 
-        if (wayToGo.hasFinish() || wayToGo.currentShorted_idx > 9  || myState!=DEFENSE)
+        if (wayToGo.hasFinish() || wayToGo.currentShorted_idx > 8)
         {
             if (myState == CRITICAL_RECOVERY_WAIT)
             {

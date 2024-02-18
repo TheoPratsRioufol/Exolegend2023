@@ -4,17 +4,24 @@
 // include min
 #include <algorithm>
 
-float kw = 5.0f;
+float kw = 3.5f;
 float kv = 2.5f;
 float wlimit = 4.f;
-float vlimitMax = 1.6f;
-float vlimitMin = 1.6f;
+float vlimit = 1.0f;
 float erreurPos = 0.01;
-float erreurPos_angle = 5 * DEG_TO_RAD;
-float dRampe = 0;
-float penteRampe = vlimitMax / dRampe;
+float Komega = 0.6f;
+float erreurPos_angle = 15 * DEG_TO_RAD;
+/*
+float kw = 2.5f;
+float kv = 1.5f;
+float wlimit = 3.f;
+float vlimit = 2.5f;
+float erreurPos = 0.01;
+float Komega = 0.4f;
+float erreurPos_angle = 5 * DEG_TO_RAD;*/
 
 float squareSize;
+float Kint = 0.0f;
 
 bool visited[12][12] = {};
 Position goal{0.14f, 1.615f, 0.f};
@@ -222,24 +229,11 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
     double dx = cons.x - pos.x;
     double dy = cons.y - pos.y;
     double d = sqrt(dx * dx + dy * dy);
-    float vlimit = vlimitMax;
 
     if (d > erreurPos)
     {
         double rho = atan2(dy, dx);
         double consw = kw * reductionAngle(rho - pos.a);
-
-        if (d < dRampe)
-        {
-            if (d * penteRampe > vlimitMin)
-            {
-                vlimit = d * penteRampe;
-            }
-            else
-            {
-                vlimit = vlimitMin;
-            }
-        }
 
         double consv = kv * d * pow(cos(reductionAngle(rho - pos.a)), 15);
         consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
@@ -249,10 +243,11 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
         consvr = consv + gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
 
         // gladiator->log("angle diff = %f",reductionAngle(rho - pos.a));
-        // if (reductionAngle(rho - pos.a)> PI/12){
-        //     consvl = -0.3 * reductionAngle(rho - pos.a)/PI;
-        //     consvr = 0.3 * reductionAngle(rho - pos.a)/PI;
-        // }
+        if (abs(reductionAngle(rho - pos.a)) > PI / 12)
+        {
+            consvl = -Komega * reductionAngle(rho - pos.a) / PI;
+            consvr = Komega * reductionAngle(rho - pos.a) / PI;
+        }
     }
     else
     {
@@ -263,7 +258,6 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
     gladiator->control->setWheelSpeed(WheelAxis::RIGHT, consvr, false); // GFA 3.2.1
     gladiator->control->setWheelSpeed(WheelAxis::LEFT, consvl, false);  // GFA 3.2.1
 }
-
 
 float distance(const Position &p1, const Position &p2)
 {
