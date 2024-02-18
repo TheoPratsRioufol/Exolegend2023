@@ -5,13 +5,14 @@
 #include <algorithm>
 
 float kw = 5.0f;
-float kv = 1.5f;
-float wlimit = 5.f;
-float vlimitMax = .3f;
-float vlimitMin = .1f;
+float kv = 2.5f;
+float wlimit = 4.f;
+float vlimitMax = 1.6f;
+float vlimitMin = 1.6f;
 float erreurPos = 0.01;
 float erreurPos_angle = 5 * DEG_TO_RAD;
-float dRampe = 0.5;
+float dRampe = 0;
+float penteRampe = vlimitMax / dRampe;
 
 float squareSize;
 
@@ -110,7 +111,19 @@ void go_to_no_u_turn(Position cons, Position pos, Gladiator *gladiator)
             diff_angle = reductionAngle(rho - pos.a);
             double consw = kw * diff_angle;
 
-            double consv = kv * d * cos(diff_angle);
+            if (d < dRampe)
+            {
+                if (d * penteRampe > vlimitMin)
+                {
+                    vlimit = d * penteRampe;
+                }
+                else
+                {
+                    vlimit = vlimitMin;
+                }
+            }
+
+            double consv = kv * d * pow(cos(reductionAngle(rho - pos.a)), 15);
             consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
             consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
 
@@ -120,8 +133,20 @@ void go_to_no_u_turn(Position cons, Position pos, Gladiator *gladiator)
             gladiator->log("reverse");
             diff_angle = reductionAngle(rho - pos.a-PI);
             double consw = -kw * diff_angle;
+            if (d < dRampe)
+            {
+                if (d * penteRampe > vlimitMin)
+                {
+                    vlimit = d * penteRampe;
+                }
+                else
+                {
+                    vlimit = vlimitMin;
+                }
+            }
 
-            double consv = kv * d * cos(diff_angle);
+            double consv = kv * d * pow(cos(diff_angle), 15);
+
             consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
             consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
 
@@ -204,7 +229,19 @@ void go_to(Position cons, Position pos, Gladiator *gladiator)
         double rho = atan2(dy, dx);
         double consw = kw * reductionAngle(rho - pos.a);
 
-        double consv = kv * d * cos(reductionAngle(rho - pos.a));
+        if (d < dRampe)
+        {
+            if (d * penteRampe > vlimitMin)
+            {
+                vlimit = d * penteRampe;
+            }
+            else
+            {
+                vlimit = vlimitMin;
+            }
+        }
+
+        double consv = kv * d * pow(cos(reductionAngle(rho - pos.a)), 15);
         consw = abs(consw) > wlimit ? (consw > 0 ? 1 : -1) * wlimit : consw;
         consv = abs(consv) > vlimit ? (consv > 0 ? 1 : -1) * vlimit : consv;
 
