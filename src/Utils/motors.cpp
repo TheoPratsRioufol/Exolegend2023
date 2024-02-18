@@ -11,6 +11,11 @@ float vlimit = 1.0f;
 float erreurPos = 0.01;
 float Komega = 0.6f;
 float erreurPos_angle = 15 * DEG_TO_RAD;
+
+float vlimitMax = 1.6f;
+float vlimitMin = 1.6f;
+float dRampe = 0;
+float penteRampe = vlimitMax / dRampe;
 /*
 float kw = 2.5f;
 float kv = 1.5f;
@@ -196,7 +201,7 @@ void go_to_no_u_turn(Position cons, Position pos, Gladiator *gladiator)
 void go_to_angle(float cons_angle, float pos_angle, Gladiator *gladiator)
 {
     double consvl, consvr;
-    const float K = 0.5;
+    const float K = 0.9;
     float diff_angle = reductionAngle(cons_angle-pos_angle);
     if (abs(diff_angle) > erreurPos_angle)
     {

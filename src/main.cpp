@@ -57,7 +57,7 @@ int computeWhatToDo(const MazeSquare *current_square, States state, int len_path
     // on cherche le meilleur candidat qui minimise le cout et respecte la target
     int bestTarget = genId(current_square);
     float minCost = MAX_COST;
-    int minCheminsNb = 1000;
+    // int minCheminsNb = 1000;
     int maxCriteria = 0;
     if(myState==ATTACK){
         // go to the robot id vulnerable_enemy
@@ -65,14 +65,14 @@ int computeWhatToDo(const MazeSquare *current_square, States state, int len_path
         bestTarget = genId(robot.position.x, robot.position.y);
     }
     else{
-        float bestDist = MAZE_NUMBER_CELLS * 10;
+        // float bestDist = MAZE_NUMBER_CELLS * 10;
         // gladiator->log("log2");
 
         for (int k = 0; k < MAZE_NUMBER_CELLS; k++)
         {
             if (!mazeCosts->has(k))
                 continue;
-            mazeNode *candidate = mazeCosts->get(k);
+            // mazeNode *candidate = mazeCosts->get(k);
             if (myState == ESCAPE_BOUND)
             {
                 maxCriteria = 1;
@@ -285,6 +285,6 @@ void loop()
 
         }
         
-        delay(10);
+        // delay(20);
     }
 }
