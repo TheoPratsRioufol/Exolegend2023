@@ -2,7 +2,7 @@
 
 // #include "Utils/graph.h"
 #include "Utils/motors.h"
-#include "Utils/RocketMonitoring.h"
+// #include "Utils/RocketMonitoring.h"
 
 #define TIME_SKRINK 20000
 #define TIME_ESCAPE_BOUND 12000
@@ -21,7 +21,10 @@ SimpleCoord arr[SIZE_MAX_WAY]; //= {Coor{0, 2}, Coor{3, 3}};
 
 WayToGo wayToGo;
 
+hashMazeNode *mazeCosts;
+
 bool start = true;
+unsigned char vulnerable_enemy = 0;
 
 // Gladiator* gladiator;
 
@@ -30,8 +33,7 @@ void getDirStack()
 
     const MazeSquare *current_square = gladiator->maze->getNearestSquare();
     gladiator->log("Get New Strategy ================");
-    hashMazeNode *mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted, myState); // assure que l'on est en dessous du critère
-
+    mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted, myState); // assure que l'on est en dessous du critère
     // on cherche le meilleur candidat qui minimise le cout et respecte la target
     int bestTarget = genId(current_square);
     int minCost = MAX_COST;
@@ -55,19 +57,26 @@ void getDirStack()
     }
     else
     {*/
-    for (int k = 0; k < MAZE_NUMBER_CELLS; k++)
-    {
-        mazeNode *candidate = mazeCosts->get(k);
-        if ((candidate->stopCriteria > maxCriteria) && (candidate->stopCriteria <= LEN_PATH_STRAT))
+    if(myState==ATTACK){
+        // go to the robot id vulnerable_enemy
+        RobotData robot = gladiator->game->getOtherRobotData(vulnerable_enemy);
+        bestTarget = genId(robot.position.x, robot.position.y);
+    }
+    else{
+        for (int k = 0; k < MAZE_NUMBER_CELLS; k++)
         {
-            maxCriteria = candidate->stopCriteria;
-            bestTarget = k;
-            minCost = candidate->cost;
-        }
-        else if ((candidate->stopCriteria == maxCriteria) && (candidate->cost < minCost))
-        {
-            minCost = candidate->cost;
-            bestTarget = k;
+            mazeNode *candidate = mazeCosts->get(k);
+            if ((candidate->stopCriteria > maxCriteria) && (candidate->stopCriteria <= LEN_PATH_STRAT))
+            {
+                maxCriteria = candidate->stopCriteria;
+                bestTarget = k;
+                minCost = candidate->cost;
+            }
+            else if ((candidate->stopCriteria == maxCriteria) && (candidate->cost < minCost))
+            {
+                minCost = candidate->cost;
+                bestTarget = k;
+            }
         }
     }
     //}
@@ -110,6 +119,8 @@ void reset()
     reset_motors(current_square, size, gladiator);
 
     getDirStack();
+    // print something about mazeCosts
+    // gladiator->log("MazeCosts: %d", mazeCosts->elements[1].id);
     dateOfLastShrink = millis();
 
     rocketMonitoring = new RocketMonitoring();
@@ -119,19 +130,37 @@ void reset()
 
 void lookWatch()
 {
-    if ((myState != ESCAPE_BOUND) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
+    if ((myState != ESCAPE_BOUND && myState != DEFENSE) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
     {
         myState = ESCAPE_BOUND;
         gladiator->log("Mode ESCAPE_BOUND");
         getDirStack();
     }
-    if (millis() - dateOfLastShrink > TIME_SKRINK)
+    if (myState != DEFENSE && millis() - dateOfLastShrink > TIME_SKRINK)
     {
         deleted++;
         dateOfLastShrink = millis();
         myState = EAT_AS_POSSIBLE;
         getDirStack();
         gladiator->log("Mode EAT_AS_POSSIBLE");
+    }
+    if(myState != DEFENSE && myState != ESCAPE_BOUND && myState != ATTACK){
+        // check if one of the enemy robots is vulnerable
+        vulnerable_enemy = is_vulnerable_enemy(gladiator,mazeCosts);
+        if(vulnerable_enemy!=0){
+            myState = ATTACK;
+            gladiator->log("Mode ATTACK");
+            getDirStack();
+        }
+    }
+    if(rocketMonitoring->aimed_at_me(gladiator)){
+        myState = DEFENSE;
+        gladiator->log("Mode DEFENSE");
+        // getDirStack();
+    }else if(myState == DEFENSE){
+        myState = EAT_AS_POSSIBLE;
+        gladiator->log("Mode EAT_AS_POSSIBLE");
+        lookWatch();
     }
 }
 
@@ -153,19 +182,22 @@ void loop()
         rocketMonitoring->monitoring_loop(gladiator);
         rocketMonitoring->print_info(gladiator);
 
-        if (wayToGo.hasFinish())
+        //log here
+
+
+        if (wayToGo.hasFinish() || myState!=DEFENSE)
         {
             gladiator->log("Finish path, starting new one from %d,%d", geti(genId(gladiator->maze->getNearestSquare())), getj(genId(gladiator->maze->getNearestSquare())));
             getDirStack();
         }
-        if (gladiator->weapon->canLaunchRocket())
+        robot_id_to_fire = closestRobotEnemy(gladiator);
+        if (should_launch_rocket(gladiator,robot_id_to_fire))
         {
-            robot_id_to_fire = closestRobotEnemy(gladiator);
-            motor_handleMvt(&wayToGo, gladiator, deleted, true, robot_id_to_fire);
+            motor_handleMvt(&wayToGo, gladiator, deleted, true, robot_id_to_fire, &myState,rocketMonitoring);
         }
         else
         {
-            motor_handleMvt(&wayToGo, gladiator, deleted, false, 0);
+            motor_handleMvt(&wayToGo, gladiator, deleted, false, 0, &myState,rocketMonitoring);
         }
         lookWatch();
         delay(10);

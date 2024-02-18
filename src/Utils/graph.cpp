@@ -215,6 +215,8 @@ void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad)
 
 int genPath(SimpleCoord *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad)
 {
+    // log here7
+    glad->log("here7");
     mazeNode *prevNode = &B;
     pointMission[0] = SimpleCoord{geti(B.id), getj(B.id)};
     int length_ = 1;
@@ -231,5 +233,28 @@ int genPath(SimpleCoord *pointMission, hashMazeNode *costs, mazeNode A, mazeNode
         pointMission[i] = SimpleCoord{geti(nextid), getj(nextid)};
     }
     pointMission[length_ - 1] = SimpleCoord{geti(A.id), getj(A.id)};
+    return length_;
+}
+
+int genPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad)
+{
+    // log here7
+    glad->log("here7");
+    mazeNode *prevNode = &B;
+    // pointMission[0] = SimpleCoord{geti(B.id), getj(B.id)};
+    int length_ = 1;
+    for (int i = 1; i < MAZE_NUMBER_CELLS; i++)
+    {
+        int nextid = costs->get(prevNode->id)->parent;
+        // glad->log("Go %d, %d before ! (id=%d) %d", geti(nextid), getj(nextid), prevNode->id, nextid);
+        length_++;
+        if (nextid == A.id)
+        {
+            break;
+        }
+        prevNode = costs->get(nextid);
+        // pointMission[i] = SimpleCoord{geti(nextid), getj(nextid)};
+    }
+    // pointMission[length_ - 1] = SimpleCoord{geti(A.id), getj(A.id)};
     return length_;
 }

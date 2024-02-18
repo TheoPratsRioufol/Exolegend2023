@@ -13,7 +13,8 @@ enum States
     EAT_AS_POSSIBLE,
     ESCAPE_BOUND,
     ATTACK,
-    DEFENSE
+    DEFENSE,
+    DODGE_ROCKET
 };
 
 struct SimpleCoord
@@ -191,3 +192,4 @@ int cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States st
 hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, int deleted, States state = DEFAULT_STATE);
 void printPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);
 int genPath(SimpleCoord *pointMission, hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);
+int genPath(hashMazeNode *costs, mazeNode A, mazeNode B, Gladiator *glad);

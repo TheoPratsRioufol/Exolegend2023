@@ -9,11 +9,22 @@ struct pos_2d
     float j;
 };
 
+typedef struct {
+    pos_2d start;
+    pos_2d end;
+} Segment;
+
 float distance(pos_2d p1, pos_2d p2);
 
 unsigned char closest_robot_id_to_pos(pos_2d pos, Gladiator *gladiator, bool include_self);
 
 bool is_out_of_bounds(int i, int j);
+
+double distancePointToSegment(pos_2d point, Segment segment);
+
+double dotProduct(pos_2d p1, pos_2d p2);
+
+double distanceSquared(pos_2d p1, pos_2d p2);
 
 class RocketMonitoring
 {
@@ -32,5 +43,6 @@ public:
     void check_for_new_rockets(Gladiator* gladiator);
     void set_new_rocket_on_map(int index, pos_2d pos, Gladiator *gladiator);
     void monitoring_loop(Gladiator *gladiator);
+    bool aimed_at_me(Gladiator *gladiator);
     void print_info(Gladiator *gladiator);
 };
