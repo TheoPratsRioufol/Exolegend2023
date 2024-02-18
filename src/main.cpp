@@ -43,7 +43,7 @@ void getDirStack()
 
     const MazeSquare *current_square = gladiator->maze->getNearestSquare();
     gladiator->log("Get New Strategy ================");
-    hashMazeNode *mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted, myState); // assure que l'on est en dessous du critère
+    mazeCosts = solve(current_square, gladiator, LEN_PATH_STRAT, deleted, myState); // assure que l'on est en dessous du critère
 
     if (myState == ESCAPE_BOUND)
     {
@@ -155,7 +155,7 @@ void reset()
 
 void lookWatch()
 {
-    if ((myState != ESCAPE_BOUND && myState != DEFENSE) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
+    if ((myState != ESCAPE_BOUND) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND))
     {
         myState = ESCAPE_BOUND;
         gladiator->log("Mode ESCAPE_BOUND");
@@ -184,7 +184,7 @@ void lookWatch()
         dateLastMove = millis();
         return;
     }
-    if(myState != DEFENSE && myState != ESCAPE_BOUND && myState != ATTACK){
+    if(myState != ESCAPE_BOUND && myState != ATTACK){
         // check if one of the enemy robots is vulnerable
         // vulnerable_enemy = is_vulnerable_enemy(gladiator,mazeCosts);
         if(vulnerable_enemy!=0){
@@ -197,10 +197,6 @@ void lookWatch()
         myState = DEFENSE;
         gladiator->log("Mode DEFENSE");
         //getDirStack();
-    }else if(myState == DEFENSE){
-        myState = EAT_AS_POSSIBLE;
-        gladiator->log("Mode EAT_AS_POSSIBLE");
-        // getDirStack();
     }
 }
 

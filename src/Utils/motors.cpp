@@ -362,7 +362,7 @@ void motor_handleMvt(WayToGo *wayToGo, Gladiator *gladiator, int deleted, bool f
         // get the direction to that square
         pos_2d dir = {goal_pos.i - robot_pos.i, goal_pos.j - robot_pos.j};
         // advance by 1*3/12 in that direction
-        pos_2d goal_pos_2 = {robot_pos.i + 1.0f*3.0f/12.0f*dir.i, robot_pos.j + 1.0f*3.0f/12.0f*dir.j};
+        pos_2d goal_pos_2 = {robot_pos.i + 0.7f*3.0f/12.0f*dir.i, robot_pos.j + 0.7f*3.0f/12.0f*dir.j};
         // log goal_pos_2
         gladiator->log("goal_pos_2 : %f, %f", goal_pos_2.i, goal_pos_2.j);
         
@@ -373,7 +373,7 @@ void motor_handleMvt(WayToGo *wayToGo, Gladiator *gladiator, int deleted, bool f
         if (distance(robot.position, {goal_pos_2.i, goal_pos_2.j, angle_fin}) < erreurPos)
         {
             double angle_robot = robot.position.a;
-            go_to_angle(angle_robot + PI-5.0*DEG_TO_RAD, robot.position.a, gladiator);
+            go_to_angle(angle_robot + PI-20.0*DEG_TO_RAD, robot.position.a, gladiator);
         }
 
 
