@@ -225,13 +225,25 @@ void loop()
 
         if (wayToGo.hasFinish() || wayToGo.currentShorted_idx > 8)
         {
+            robot_id_to_fire = closestRobotEnemy(gladiator);
+            Position enemy = gladiator->game->getOtherRobotData(robot_id_to_fire).position;
+            float distEnemy = distance(enemy, gladiator->robot->getData().position);
             if (myState == CRITICAL_RECOVERY_WAIT)
             {
                 myState = DEFAULT_STATE;
             }
-            wayToGo.currentShorted_idx = 0;
-            gladiator->log("Finish path, starting new one from %d,%d", geti(genId(gladiator->maze->getNearestSquare())), getj(genId(gladiator->maze->getNearestSquare())));
-            getDirStack();
+            if ((distEnemy < 2) && (myState != ATTACK))
+            {
+                myState = ATTACK;
+                wayToGo.pushSingleCoord(SimpleCoord{gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j}, SimpleCoord{(int)enemy.x, (int)enemy.y});
+                gladiator->log("Attack %f", distEnemy);
+            }
+            else
+            {
+                wayToGo.currentShorted_idx = 0;
+                gladiator->log("Finish path, starting new one from %d,%d", geti(genId(gladiator->maze->getNearestSquare())), getj(genId(gladiator->maze->getNearestSquare())));
+                getDirStack();
+            }
         }
         if (gladiator->weapon->canLaunchRocket() && false)
         {

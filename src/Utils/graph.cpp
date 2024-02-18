@@ -95,7 +95,7 @@ float cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States 
 
     if (state == EAT_AS_POSSIBLE)
         // turn 5 + 0 * (nodeB.square->possession == glad->robot->getData().teamId) + 5 * (!isBoundarie(nodeB, deleted + 1)) + 30 - 1.1 * distance(SimpleCoord{nodeB.square->i, nodeB.square->j}, CENTER_POINT); //+ 15 * (nodeB.square->coin.value != 1) - 6 * (isBoundarie(nodeB, deleted) && (nodeB.square->possession != glad->robot->getData().teamId));
-        return 30 - 1.5 * distance(SimpleCoord{nodeB.square->i, nodeB.square->j}, CENTER_POINT); //+ 15 * (nodeB.square->coin.value != 1); // - 6 * (isBoundarie(nodeB, deleted) && (nodeB.square->possession != glad->robot->getData().teamId));
+        return 30 - 1.5 * distance(SimpleCoord{nodeB.square->i, nodeB.square->j}, CENTER_POINT) + 60 * (nodeB.square->coin.value != 1); // - 6 * (isBoundarie(nodeB, deleted) && (nodeB.square->possession != glad->robot->getData().teamId));
     else
         return 1; // + isBoundarie(nodeB, deleted);
     // return 1 + 1 * (nodeB.square->possession == glad->robot->getData().teamId);
