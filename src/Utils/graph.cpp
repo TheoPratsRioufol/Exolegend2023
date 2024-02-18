@@ -94,16 +94,17 @@ float cost(mazeNode nodeA, mazeNode nodeB, int deleted, Gladiator *glad, States 
 {
 
     if (state == EAT_AS_POSSIBLE)
-        return 5 + 15 * (nodeB.square->possession == glad->robot->getData().teamId) + 5 * (!isBoundarie(nodeB, deleted + 1)) + 10 - distance(SimpleCoord{nodeB.square->i, nodeB.square->j}, CENTER_POINT); //+ 15 * (nodeB.square->coin.value != 1) - 6 * (isBoundarie(nodeB, deleted) && (nodeB.square->possession != glad->robot->getData().teamId));
+        // turn 5 + 0 * (nodeB.square->possession == glad->robot->getData().teamId) + 5 * (!isBoundarie(nodeB, deleted + 1)) + 30 - 1.1 * distance(SimpleCoord{nodeB.square->i, nodeB.square->j}, CENTER_POINT); //+ 15 * (nodeB.square->coin.value != 1) - 6 * (isBoundarie(nodeB, deleted) && (nodeB.square->possession != glad->robot->getData().teamId));
+        return 30 - 1.5 * distance(SimpleCoord{nodeB.square->i, nodeB.square->j}, CENTER_POINT); //+ 15 * (nodeB.square->coin.value != 1); // - 6 * (isBoundarie(nodeB, deleted) && (nodeB.square->possession != glad->robot->getData().teamId));
     else
-        return 1 + isBoundarie(nodeB, deleted);
+        return 1; // + isBoundarie(nodeB, deleted);
     // return 1 + 1 * (nodeB.square->possession == glad->robot->getData().teamId);
 }
 
 int getAvancement(mazeNode nextNode, int deleted, States state, Gladiator *glad)
 {
     if (state == ESCAPE_BOUND)
-        return !isBoundarie(nextNode, deleted);
+        return 1; //! isBoundarie(nextNode, deleted);
     else
         return (int)(nextNode.square->possession != glad->robot->getData().teamId); // + (int)(nextNode.square->coin.value != 1);
     /*
@@ -146,7 +147,7 @@ hashMazeNode *solve(const MazeSquare *start_, Gladiator *glad, int pathLength, i
     // glad->log("PUSH ptr = %d", frontier.get(0));
     GlobalCost.add(start);
 
-    glad->log("Starting FROM %d,%d is bound%d", geti(start.id), getj(start.id), isBoundarie(geti(start.id), getj(start.id), deleted));
+    // glad->log("Starting FROM %d,%d is bound%d", geti(start.id), getj(start.id), isBoundarie(geti(start.id), getj(start.id), deleted));
 
     mazeNode workingNode;
     mazeNode nextNode;
@@ -240,8 +241,12 @@ int genPath(SimpleCoord *pointMission, hashMazeNode *costs, mazeNode A, mazeNode
     for (int i = 1; i < MAZE_NUMBER_CELLS; i++)
     {
         int nextid = costs->get(prevNode->id)->parent;
-        // glad->log("Go %d, %d before ! (id=%d) %d", geti(nextid), getj(nextid), prevNode->id, nextid);
+        glad->log("Go %d, %d before ! (id=%d) %d", geti(nextid), getj(nextid), prevNode->id, nextid);
         length_++;
+        if (prevNode->id == -1)
+        {
+            return -1;
+        }
         if (nextid == A.id)
         {
             break;

@@ -29,6 +29,7 @@ class WayToGo
 public:
     SimpleCoord coordsInverted[SIZE_MAX_WAY];
     SimpleCoord coordsShorted[SIZE_MAX_WAY];
+    SimpleCoord trucAAjouter;
     int current_idx = 0;
     int currentShorted_idx = 0;
     int length = 0;
@@ -41,17 +42,83 @@ public:
     {
         return coordsShorted[currentShorted_idx];
     }
-    void simplify()
+    bool isCoherent(Gladiator *glad, SimpleCoord c1, SimpleCoord c2)
+    {
+        if (c1.i == c2.i)
+            return true;
+        if (c1.j == c2.j)
+            return true;
+        if (c1.i - c2.i == 1 && c1.j - c2.j == 1)
+        {
+            if (glad->maze->getSquare(c1.i, c1.j)->southSquare == nullptr)
+            {
+                trucAAjouter.i = c1.i - 1;
+                trucAAjouter.j = c1.j;
+            }
+            else
+            {
+                trucAAjouter.i = c1.i;
+                trucAAjouter.j = c1.j - 1;
+            }
+        }
+        if (c1.i - c2.i == -1 && c1.j - c2.j == 1)
+        {
+            if (glad->maze->getSquare(c1.i, c1.j)->southSquare == nullptr)
+            {
+                trucAAjouter.i = c1.i + 1;
+                trucAAjouter.j = c1.j;
+            }
+            else
+            {
+                trucAAjouter.i = c1.i;
+                trucAAjouter.j = c1.j - 1;
+            }
+        }
+        if (c1.i - c2.i == 1 && c1.j - c2.j == -1)
+        {
+            if (glad->maze->getSquare(c1.i, c1.j)->northSquare == nullptr)
+            {
+                trucAAjouter.i = c1.i - 1;
+                trucAAjouter.j = c1.j;
+            }
+            else
+            {
+                trucAAjouter.i = c1.i;
+                trucAAjouter.j = c1.j + 1;
+            }
+        }
+        if (c1.i - c2.i == -1 && c1.j - c2.j == -1)
+        {
+            if (glad->maze->getSquare(c1.i, c1.j)->northSquare == nullptr)
+            {
+                trucAAjouter.i = c1.i + 1;
+                trucAAjouter.j = c1.j;
+            }
+            else
+            {
+                trucAAjouter.i = c1.i;
+                trucAAjouter.j = c1.j + 1;
+            }
+        }
+        return false;
+    }
+    void simplify(Gladiator *glad)
     {
         int count_short = 0;
         coordsShorted[0] = coordsInverted[length - 1];
         for (int i = 1; i < length - 1; i++)
         {
-            // if (!(((coordsInverted[length - 2 - i].i == coordsInverted[length - 1 - i].i) && (coordsInverted[length - 1 - i].i == coordsInverted[length - i].i)) || ((coordsInverted[length - 2 - i].j == coordsInverted[length - 1 - i].j) && (coordsInverted[length - 1 - i].j == coordsInverted[length - i].j))))
-            // {
-            count_short++;
-            coordsShorted[count_short] = coordsInverted[length - 1 - i];
-            // }
+            if (!(((coordsInverted[length - 2 - i].i == coordsInverted[length - 1 - i].i) && (coordsInverted[length - 1 - i].i == coordsInverted[length - i].i)) || ((coordsInverted[length - 2 - i].j == coordsInverted[length - 1 - i].j) && (coordsInverted[length - 1 - i].j == coordsInverted[length - i].j))))
+            {
+                if (!isCoherent(glad, coordsInverted[length - 2 - i], coordsInverted[length - 1 - i]))
+                {
+                    glad->log("XXXXXXXXXXXDDDDDDDDD");
+                    count_short++;
+                    coordsShorted[count_short] = trucAAjouter;
+                }
+                count_short++;
+                coordsShorted[count_short] = coordsInverted[length - 1 - i];
+            }
         }
         count_short++;
         coordsShorted[count_short] = coordsInverted[0];
@@ -205,6 +272,10 @@ public:
     bool has(mazeNode node)
     {
         return (elements[node.id].id != -1);
+    }
+    bool has(int id)
+    {
+        return (elements[id].id != -1);
     }
 };
 
