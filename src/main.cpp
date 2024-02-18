@@ -14,7 +14,6 @@
 #define LEN_PATH_STRAT 1
 #define DIST_NO_MOVE 0.02f
 
-
 Gladiator *gladiator;
 RocketMonitoring *rocketMonitoring;
 
@@ -43,15 +42,15 @@ int computeWhatToDo(const MazeSquare *current_square, States state, int len_path
 
     // retourne dans array
     mazeCosts = solve(current_square, gladiator, len_path, deleted, state); // assure que l'on est en dessous du critère
-                                                                                          /*
-                                                                                              if (myState == ESCAPE_BOUND)
-                                                                                              {
-                                                                                                  gladiator->log("ESCAPE_BOUND mode");
-                                                                                              }
-                                                                                              else
-                                                                                              {
-                                                                                                  gladiator->log("REGULAR mode");
-                                                                                              }*/
+                                                                            /*
+                                                                                if (myState == ESCAPE_BOUND)
+                                                                                {
+                                                                                    gladiator->log("ESCAPE_BOUND mode");
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    gladiator->log("REGULAR mode");
+                                                                                }*/
 
     // SimpleCoord current_pos{current_square->i, current_square->j};
     // on cherche le meilleur candidat qui minimise le cout et respecte la target
@@ -59,12 +58,14 @@ int computeWhatToDo(const MazeSquare *current_square, States state, int len_path
     float minCost = MAX_COST;
     // int minCheminsNb = 1000;
     int maxCriteria = 0;
-    if(myState==ATTACK){
+    if (myState == ATTACK)
+    {
         // go to the robot id vulnerable_enemy
         RobotData robot = gladiator->game->getOtherRobotData(vulnerable_enemy);
         bestTarget = genId(robot.position.x, robot.position.y);
     }
-    else{
+    else
+    {
         // float bestDist = MAZE_NUMBER_CELLS * 10;
         // gladiator->log("log2");
 
@@ -211,19 +212,22 @@ void lookWatch()
         dateLastMove = millis();
         return;
     }
-    if(myState != ESCAPE_BOUND && myState != ATTACK){
+    if (myState != ESCAPE_BOUND && myState != ATTACK)
+    {
         // check if one of the enemy robots is vulnerable
         // vulnerable_enemy = is_vulnerable_enemy(gladiator,mazeCosts);
-        if(vulnerable_enemy!=0){
+        if (vulnerable_enemy != 0)
+        {
             myState = ATTACK;
             gladiator->log("Mode ATTACK");
             // getDirStack();
         }
     }
-    if(aimed_at_me){
+    if (aimed_at_me)
+    {
         myState = DEFENSE;
         gladiator->log("Mode DEFENSE");
-        //getDirStack();
+        // getDirStack();
     }
 }
 
@@ -257,13 +261,13 @@ void loop()
             getDirStack();
         }
         robot_id_to_fire = closestRobotEnemy(gladiator);
-        if (should_launch_rocket(gladiator,robot_id_to_fire))
+        if (should_launch_rocket(gladiator, robot_id_to_fire))
         {
-            motor_handleMvt(&wayToGo, gladiator, deleted, true, robot_id_to_fire, &myState,rocketMonitoring);
+            motor_handleMvt(&wayToGo, gladiator, deleted, true, robot_id_to_fire, &myState, rocketMonitoring);
         }
         else
         {
-            motor_handleMvt(&wayToGo, gladiator, deleted, false, 0, &myState,rocketMonitoring);
+            motor_handleMvt(&wayToGo, gladiator, deleted, false, 0, &myState, rocketMonitoring);
         }
 
         if (distance(lastPosition, gladiator->robot->getData().position) < DIST_NO_MOVE)
@@ -275,16 +279,17 @@ void loop()
             dateLastMove = millis();
             lastPosition = gladiator->robot->getData().position;
         }
-        
-        vulnerable_enemy = is_vulnerable_enemy(gladiator,mazeCosts);
+
+        vulnerable_enemy = is_vulnerable_enemy(gladiator, mazeCosts);
         aimed_at_me = rocketMonitoring->aimed_at_me(gladiator);
         lookWatch();
+        /*
         if (myState==EAT_AS_POSSIBLE || myState==ESCAPE_BOUND || myState==ATTACK)
         {
             getDirStack();
 
-        }
-        
+        }*/
+
         // delay(20);
     }
 }
