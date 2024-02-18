@@ -1,6 +1,6 @@
 #include "gladiator.h"
 
-#define ROCKET_SPEED 0.6
+#define ROCKET_SPEED 0.6f
 #define TIME_ROCKET_ON_MAP 5.0*ROCKET_SPEED*1000.0
 
 struct pos_2d

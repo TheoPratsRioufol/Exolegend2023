@@ -8,7 +8,7 @@ float distance(pos_2d p1, pos_2d p2)
 
 unsigned char closest_robot_id_to_pos(pos_2d pos, Gladiator *gladiator, bool include_self)
 {
-    unsigned char closest_robot_id;
+    unsigned char closest_robot_id = -1;
     float min_distance = 1000;
     RobotList robots = gladiator->game->getPlayingRobotsId();
     for (int i = 0; i < 4; i++)
@@ -65,7 +65,7 @@ void RocketMonitoring::check_for_new_rockets(Gladiator *gladiator)
                 !danger_squares[i][j])
             {
 
-                pos_2d rocket_pos = {((float)i + 0.5) * 3.0 / 12.0, ((float)j + 0.5) * 3.0 / 12.0};
+                pos_2d rocket_pos = {(0.5f+i) * 3.0f / 12.0f, (0.5f+j) * 3.0f / 12.0f};
                 set_new_rocket_on_map(last_index, rocket_pos, gladiator);
                 last_index++;
             }
@@ -148,24 +148,29 @@ double distancePointToSegment(pos_2d point, Segment segment) {
         return sqrt(distanceSquared(point, closestPoint));
     }
 }
-
+RobotData robot;
+pos_2d robot_pos;
+pos_2d rocket_dir;
+pos_2d rocket_now;
+pos_2d robot_to_rocket;
+Segment rocket_path;
 bool RocketMonitoring::aimed_at_me(Gladiator *gladiator){
     // calculate distance between robot and rocket path
-    RobotData robot = gladiator->robot->getData();
-    pos_2d robot_pos = {robot.position.x, robot.position.y};
+    robot = gladiator->robot->getData();
+    robot_pos = {robot.position.x, robot.position.y};
 
     for (int i = 0; i < 16; i++)
     {
         if (RocketMonitoring::Rockets_on_map[i])
         {
             // check if rocket is going toward robot
-            pos_2d rocket_dir = {RocketMonitoring::Rockets_on_map_end_pos[i].i - RocketMonitoring::Rockets_on_map_start_pos[i].i, RocketMonitoring::Rockets_on_map_end_pos[i].j - RocketMonitoring::Rockets_on_map_start_pos[i].j};
+            rocket_dir = {RocketMonitoring::Rockets_on_map_end_pos[i].i - RocketMonitoring::Rockets_on_map_start_pos[i].i, RocketMonitoring::Rockets_on_map_end_pos[i].j - RocketMonitoring::Rockets_on_map_start_pos[i].j};
             // rocket goes in a straith line at a speed of ROCKET_SPEED m/s
-            double angle_rocket_path = atan2(rocket_dir.j, rocket_dir.i);
-            pos_2d rocket_now = {RocketMonitoring::Rockets_on_map_start_pos[i].i + ROCKET_SPEED * cos(angle_rocket_path), RocketMonitoring::Rockets_on_map_start_pos[i].j + ROCKET_SPEED * sin(angle_rocket_path)};
+            float angle_rocket_path = atan2(rocket_dir.j, rocket_dir.i);
+            rocket_now = {ROCKET_SPEED * cos(angle_rocket_path)+RocketMonitoring::Rockets_on_map_start_pos[i].i, ROCKET_SPEED * sin(angle_rocket_path)+RocketMonitoring::Rockets_on_map_start_pos[i].j};
 
             // calculatethe scalar product between the rocket direction and the vector robot_pos - rocket_now
-            pos_2d robot_to_rocket = {robot_pos.i - rocket_now.i, robot_pos.j - rocket_now.j};
+            robot_to_rocket = {robot_pos.i - rocket_now.i, robot_pos.j - rocket_now.j};
             double scalar_product = rocket_dir.i * robot_to_rocket.i + rocket_dir.j * robot_to_rocket.j;
             if (scalar_product < 0)
             {
@@ -173,7 +178,7 @@ bool RocketMonitoring::aimed_at_me(Gladiator *gladiator){
             }
 
             // check if distance to rocket path is small
-            Segment rocket_path = {RocketMonitoring::Rockets_on_map_start_pos[i], RocketMonitoring::Rockets_on_map_end_pos[i]};
+            rocket_path = {RocketMonitoring::Rockets_on_map_start_pos[i], RocketMonitoring::Rockets_on_map_end_pos[i]};
             double dist = distancePointToSegment(robot_pos, rocket_path);
             if (dist < 2.0*3.0/12.0)
             {
@@ -181,6 +186,7 @@ bool RocketMonitoring::aimed_at_me(Gladiator *gladiator){
             }
         }
     }
+    return false;
 }
 
 // gladiator->log

@@ -314,8 +314,8 @@ void motor_handleMvt(WayToGo *wayToGo, Gladiator *gladiator, int deleted, bool f
                 // check if rocket is going toward robot
                 pos_2d rocket_dir = {rocketMonitoring->Rockets_on_map_end_pos[i].i - rocketMonitoring->Rockets_on_map_start_pos[i].i, rocketMonitoring->Rockets_on_map_end_pos[i].j - rocketMonitoring->Rockets_on_map_start_pos[i].j};
                 // rocket goes in a straith line at a speed of ROCKET_SPEED m/s
-                double angle_rocket_path = atan2(rocket_dir.j, rocket_dir.i);
-                pos_2d rocket_now = {rocketMonitoring->Rockets_on_map_start_pos[i].i + ROCKET_SPEED * cos(angle_rocket_path), rocketMonitoring->Rockets_on_map_start_pos[i].j + ROCKET_SPEED * sin(angle_rocket_path)};
+                float angle_rocket_path = atan2(rocket_dir.j, rocket_dir.i);
+                pos_2d rocket_now = {ROCKET_SPEED * cos(angle_rocket_path) + rocketMonitoring->Rockets_on_map_start_pos[i].i, ROCKET_SPEED * sin(angle_rocket_path) + rocketMonitoring->Rockets_on_map_start_pos[i].j};
 
                 // calculatethe scalar product between the rocket direction and the vector robot_pos - rocket_now
                 pos_2d robot_to_rocket = {robot_pos.i - rocket_now.i, robot_pos.j - rocket_now.j};
@@ -362,7 +362,7 @@ void motor_handleMvt(WayToGo *wayToGo, Gladiator *gladiator, int deleted, bool f
         // get the direction to that square
         pos_2d dir = {goal_pos.i - robot_pos.i, goal_pos.j - robot_pos.j};
         // advance by 1*3/12 in that direction
-        pos_2d goal_pos_2 = {robot_pos.i + 1.0*3.0/12.0*dir.i, robot_pos.j + 1.0*3.0/12.0*dir.j};
+        pos_2d goal_pos_2 = {robot_pos.i + 1.0f*3.0f/12.0f*dir.i, robot_pos.j + 1.0f*3.0f/12.0f*dir.j};
         // log goal_pos_2
         gladiator->log("goal_pos_2 : %f, %f", goal_pos_2.i, goal_pos_2.j);
         

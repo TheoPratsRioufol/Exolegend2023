@@ -2,7 +2,7 @@
 
 // #include "Utils/graph.h"
 #include "Utils/motors.h"
-#include "Utils/RocketMonitoring.h"
+// #include "Utils/RocketMonitoring.h"
 
 #define I_RECOVERY 5
 #define J_RECOVERY 5
@@ -13,6 +13,7 @@
 #define TIME_ESCAPE_BOUND_CRITICAL 18000
 #define LEN_PATH_STRAT 1
 #define DIST_NO_MOVE 0.02f
+
 
 Gladiator *gladiator;
 RocketMonitoring *rocketMonitoring;
@@ -34,7 +35,7 @@ hashMazeNode *mazeCosts;
 
 bool start = true;
 unsigned char vulnerable_enemy = 0;
-
+bool aimed_at_me = false;
 // Gladiator* gladiator;
 
 void getDirStack()
@@ -53,13 +54,13 @@ void getDirStack()
         gladiator->log("REGULAR mode");
     }
 
-    SimpleCoord current_pos{current_square->i, current_square->j};
+    // SimpleCoord current_pos{current_square->i, current_square->j};
     // on cherche le meilleur candidat qui minimise le cout et respecte la target
     int bestTarget = genId(current_square);
     float minCost = MAX_COST;
     int minCheminsNb = 1000;
     int maxCriteria = 0;
-    float bestDist = MAZE_NUMBER_CELLS * 10;
+    // float bestDist = MAZE_NUMBER_CELLS * 10;
 
     /*if ((myState == ESCAPE_BOUND))
     {
@@ -158,20 +159,21 @@ void lookWatch()
     {
         myState = ESCAPE_BOUND;
         gladiator->log("Mode ESCAPE_BOUND");
-        getDirStack();
+        // getDirStack();
     }
     if ((myState != CRITICAL_RECOVERY_WAIT) && (millis() - dateOfLastShrink > TIME_ESCAPE_BOUND_CRITICAL) && (isBoundarie(gladiator->maze->getNearestSquare()->i, gladiator->maze->getNearestSquare()->j, deleted)))
     {
         wayToGo.goToMaze(gladiator, deleted);
         myState = CRITICAL_RECOVERY_WAIT;
         gladiator->log("Mode CRITICAL_RECOVERY");
+        return;
     }
     if (millis() - dateOfLastShrink > TIME_SKRINK)
     {
         deleted++;
         dateOfLastShrink = millis();
         myState = EAT_AS_POSSIBLE;
-        getDirStack();
+        // getDirStack();
         gladiator->log("Mode EAT_AS_POSSIBLE");
     }
     if ((millis() - dateLastMove > TIME_NO_ACTION_ERROR)) // || isBoundarie(wayToGo.getNext().i, wayToGo.getNext().j, deleted - 1))
@@ -180,24 +182,25 @@ void lookWatch()
         myState = CRITICAL_RECOVERY_WAIT;
         gladiator->log("Mode CRITICAL_RECOVERY bis");
         dateLastMove = millis();
+        return;
     }
     if(myState != DEFENSE && myState != ESCAPE_BOUND && myState != ATTACK){
         // check if one of the enemy robots is vulnerable
-        vulnerable_enemy = is_vulnerable_enemy(gladiator,mazeCosts);
+        // vulnerable_enemy = is_vulnerable_enemy(gladiator,mazeCosts);
         if(vulnerable_enemy!=0){
             myState = ATTACK;
             gladiator->log("Mode ATTACK");
-            getDirStack();
+            // getDirStack();
         }
     }
-    if(rocketMonitoring->aimed_at_me(gladiator)){
+    if(aimed_at_me){
         myState = DEFENSE;
         gladiator->log("Mode DEFENSE");
-        // getDirStack();
+        //getDirStack();
     }else if(myState == DEFENSE){
         myState = EAT_AS_POSSIBLE;
         gladiator->log("Mode EAT_AS_POSSIBLE");
-        lookWatch();
+        // getDirStack();
     }
 }
 
@@ -249,8 +252,16 @@ void loop()
             dateLastMove = millis();
             lastPosition = gladiator->robot->getData().position;
         }
-
+        
+        vulnerable_enemy = is_vulnerable_enemy(gladiator,mazeCosts);
+        aimed_at_me = rocketMonitoring->aimed_at_me(gladiator);
         lookWatch();
+        if (myState==EAT_AS_POSSIBLE || myState==ESCAPE_BOUND || myState==ATTACK)
+        {
+            getDirStack();
+
+        }
+        
         delay(10);
     }
 }
