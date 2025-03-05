@@ -1,0 +1,168 @@
+#include "gladiator.h"
+Gladiator* gladiator;
+
+Position goal_;
+bool reached = false;
+
+float kw_ = 2.4f;
+float kv_ = 2.0f;
+float wlimit_ = 3.f;
+float vlimit_ = 1.2;
+float erreurPos_ = 0.07;
+float squareSize_ = 0.3f;
+
+float tarx = 0;
+float tary = 0.5f;
+
+
+double reductionAngle_(double x)
+{
+    x = fmod(x + PI, 2 * PI);
+    if (x < 0)
+        x += 2 * PI;
+    return x - PI;
+}
+
+void go_to_(Position cons, Position pos, Gladiator *gladiator)
+{
+    double consvl, consvr;
+    double dx = cons.x - pos.x;
+    double dy = cons.y - pos.y;
+    double d = sqrt(dx * dx + dy * dy);
+
+    if (d > erreurPos_)
+    {
+        double rho = atan2(dy, dx);
+
+        if (abs(reductionAngle_(rho - pos.a)> PI/30)){
+            consvl = -0.8 * reductionAngle_(rho - pos.a)/PI;
+            consvr = 0.8 * reductionAngle_(rho - pos.a)/PI;
+        } else { 
+            double consw = kw_ * reductionAngle_(rho - pos.a);
+            double consv = kv_ * d * pow(cos(reductionAngle_(rho - pos.a)), 15);
+            consw = abs(consw) > wlimit_ ? (consw > 0 ? 1 : -1) * wlimit_ : consw;
+            consv = abs(consv) > vlimit_ ? (consv > 0 ? 1 : -1) * vlimit_ : consv;
+
+            consvl = consv - gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
+            consvr = consv + gladiator->robot->getRobotRadius() * consw; // GFA 3.6.2
+        }
+        // faire varier consv en fonction de si il y a plusieurs cases à parcourir en ligne droite
+        // gladiator->log("angle diff = %f",reductionAngle(rho - pos.a));
+    }
+    else
+    {
+        consvr = 0;
+        consvl = 0;
+        reached = true;
+    }
+
+    gladiator->control->setWheelSpeed(WheelAxis::RIGHT, consvr, false); // GFA 3.2.1
+    gladiator->control->setWheelSpeed(WheelAxis::LEFT, consvl, false);  // GFA 3.2.1
+}
+
+
+
+void reset() {
+    //fonction de reset:
+    //initialisation de toutes vos variables avant le début d'un match
+    gladiator->log("Call of reset function"); // GFA 4.5.1
+    squareSize_ = gladiator->maze->getSquareSize();
+    // goal_ = gladiator->robot->getData().position;
+    goal_.x = 1.5;
+    goal_.y = 1.5f;
+    goal_.a = 0;
+}
+
+void setup() {
+    //instanciation de l'objet gladiator
+    gladiator = new Gladiator();
+    //enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
+    gladiator->game->onReset(&reset); // GFA 4.4.1
+    goal_.x = 0;
+    goal_.y = 3.0f;
+    goal_.a = 0;
+}
+
+void loop() {
+
+    if (gladiator->game->isStarted()){
+        Position myPosition = gladiator->robot->getData().position;
+        
+        go_to_(goal_, myPosition, gladiator);
+        if (reached) { 
+
+            const MazeSquare *currSquare = gladiator->maze->getNearestSquare();
+            bool found = false;
+
+            if (currSquare->westSquare!=nullptr){
+                if (currSquare->westSquare->possession != gladiator->robot->getData().teamId){
+                    gladiator->log("go west");
+                    MazeSquare *target = currSquare->westSquare;
+                    goal_.x = (target->i + 0.5) * squareSize_;
+                    goal_.y = (target->j + 0.5) * squareSize_;
+                    goal_.a = 0;
+                    found = true;
+                }
+            }
+            if (currSquare->eastSquare!=nullptr){
+                if ( currSquare->eastSquare->possession != gladiator->robot->getData().teamId){
+                    gladiator->log("go east");
+                    MazeSquare *target = currSquare->eastSquare;
+
+                    goal_.x = (target->i + 0.5) * squareSize_;
+                    goal_.y = (target->j + 0.5) * squareSize_;
+                    goal_.a = 0;
+                    found = true;
+                }
+            }
+            if (currSquare->northSquare!=nullptr){
+                if (currSquare->northSquare->possession != gladiator->robot->getData().teamId){
+                    gladiator->log("go north");
+                    MazeSquare *target = currSquare->northSquare;
+
+                    goal_.x = (target->i + 0.5) * squareSize_;
+                    goal_.y = (target->j + 0.5) * squareSize_;
+                    goal_.a = 0;
+                    found = true;
+                }
+            }
+            if (currSquare->southSquare!=nullptr){
+                if (currSquare->southSquare->possession != gladiator->robot->getData().teamId){
+                    gladiator->log("go south");
+                    MazeSquare *target = currSquare->southSquare;
+                    goal_.x = (target->i + 0.5) * squareSize_;
+                    goal_.y = (target->j + 0.5) * squareSize_;
+                    goal_.a = 0;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                gladiator->log("found = false");
+
+                for (int r = 10; r > 0; r--) {
+                    for (float a = 0; a < TWO_PI; a+=0.1) {
+                        const MazeSquare *target2 = gladiator->maze->getSquare(int(myPosition.x/squareSize_ - 0.5 + r * cos(a)),int(myPosition.y/squareSize_ - 0.5 + r * sin(a)));
+
+                        if (target2 != 0) {
+                            if (target2->possession != gladiator->robot->getData().teamId) {
+                                goal_.x = (target2->i + 0.5) * squareSize_;
+                                goal_.y = (target2->j + 0.5) * squareSize_;
+                                goal_.a = 0;
+                                found = true;
+                            }
+                        }
+                    }
+                }
+            } else { gladiator->log("found = true");}
+                // for (int i = 4; i < 8; i++) {
+                //     for (int j = 4; j < 8; j++) {
+                //         const MazeSquare *target2 = gladiator->maze->getSquare(i,j);
+                        
+                //     }
+                // }
+
+        }
+        reached = false;
+    }
+}
